@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Texturas de Grama</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            background-color: #1a1a2a; 
+            color: #00ffcc; 
+            font-family: 'Courier New', monospace; 
+        }
+        canvas { 
+            border: 2px solid #00ffcc; 
+            margin: 10px; 
+            display: block; 
+        }
+        .texture-container {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+        }
+        button {
+            background-color: #00ffcc;
+            color: #1a1a2a;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #00cc99;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌱 Gerador de Texturas de Grama - RPG Gótico Hi-Tech</h1>
+    <p>Clique nos botões para gerar e baixar as texturas de grama:</p>
+    
+    <div id="texture-container"></div>
+    
+    <script>
+        // Função para gerar textura de grama normal
+        function generateGrassTexture(size = 256) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Base escura
+            ctx.fillStyle = '#0a1a0a';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Adicionar variações de cor de fundo
+            for (let i = 0; i < 1000; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 3 + 1;
+                
+                const hue = 120 + Math.random() * 20; // Verde
+                const saturation = 30 + Math.random() * 20;
+                const lightness = 10 + Math.random() * 15;
+                
+                ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Adicionar fios de grama
+            for (let i = 0; i < 2000; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const length = Math.random() * 8 + 2;
+                const angle = Math.random() * Math.PI * 2;
+                
+                const hue = 120 + Math.random() * 30;
+                const saturation = 40 + Math.random() * 30;
+                const lightness = 15 + Math.random() * 20;
+                
+                ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                ctx.lineWidth = Math.random() * 2 + 0.5;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(
+                    x + Math.cos(angle) * length,
+                    y + Math.sin(angle) * length
+                );
+                ctx.stroke();
+            }
+            
+            return canvas;
+        }
+        
+        // Função para gerar textura de grama escura (gótica)
+        function generateDarkGrassTexture(size = 256) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Base muito escura
+            ctx.fillStyle = '#050a05';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Adicionar variações de cor de fundo
+            for (let i = 0; i < 800; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 4 + 1;
+                
+                const hue = 120 + Math.random() * 15; // Verde escuro
+                const saturation = 20 + Math.random() * 15;
+                const lightness = 5 + Math.random() * 10;
+                
+                ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Adicionar fios de grama escura
+            for (let i = 0; i < 1500; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const length = Math.random() * 6 + 1;
+                const angle = Math.random() * Math.PI * 2;
+                
+                const hue = 120 + Math.random() * 20;
+                const saturation = 30 + Math.random() * 20;
+                const lightness = 8 + Math.random() * 12;
+                
+                ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                ctx.lineWidth = Math.random() * 1.5 + 0.3;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(
+                    x + Math.cos(angle) * length,
+                    y + Math.sin(angle) * length
+                );
+                ctx.stroke();
+            }
+            
+            return canvas;
+        }
+        
+        // Função para gerar textura de grama com pedras
+        function generateGrassWithStonesTexture(size = 256) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Base escura
+            ctx.fillStyle = '#0a1a0a';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Adicionar grama
+            for (let i = 0; i < 1200; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 3 + 1;
+                
+                const hue = 120 + Math.random() * 25;
+                const saturation = 35 + Math.random() * 25;
+                const lightness = 12 + Math.random() * 18;
+                
+                ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Adicionar pedras
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 8 + 3;
+                
+                // Cor da pedra
+                const stoneHue = 0 + Math.random() * 30;
+                const stoneSaturation = 10 + Math.random() * 20;
+                const stoneLightness = 15 + Math.random() * 20;
+                
+                ctx.fillStyle = `hsl(${stoneHue}, ${stoneSaturation}%, ${stoneLightness}%)`;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Sombra da pedra
+                ctx.fillStyle = `hsl(${stoneHue}, ${stoneSaturation}%, ${stoneLightness - 10}%)`;
+                ctx.beginPath();
+                ctx.arc(x + 2, y + 2, radius * 0.8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Adicionar fios de grama
+            for (let i = 0; i < 1800; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const length = Math.random() * 7 + 2;
+                const angle = Math.random() * Math.PI * 2;
+                
+                const hue = 120 + Math.random() * 25;
+                const saturation = 40 + Math.random() * 25;
+                const lightness = 15 + Math.random() * 20;
+                
+                ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                ctx.lineWidth = Math.random() * 2 + 0.5;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(
+                    x + Math.cos(angle) * length,
+                    y + Math.sin(angle) * length
+                );
+                ctx.stroke();
+            }
+            
+            return canvas;
+        }
+        
+        // Função para gerar textura de grama com elementos tecnológicos
+        function generateTechGrassTexture(size = 256) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Base escura
+            ctx.fillStyle = '#0a1a0a';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Adicionar grama
+            for (let i = 0; i < 1000; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 3 + 1;
+                
+                const hue = 120 + Math.random() * 20;
+                const saturation = 30 + Math.random() * 20;
+                const lightness = 10 + Math.random() * 15;
+                
+                ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Adicionar linhas tecnológicas
+            for (let i = 0; i < 20; i++) {
+                const x1 = Math.random() * size;
+                const y1 = Math.random() * size;
+                const x2 = Math.random() * size;
+                const y2 = Math.random() * size;
+                
+                ctx.strokeStyle = '#00ffcc';
+                ctx.lineWidth = 1;
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            
+            // Adicionar pontos de energia
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 2 + 1;
+                
+                ctx.fillStyle = '#00ffcc';
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.globalAlpha = 1;
+            
+            // Adicionar fios de grama
+            for (let i = 0; i < 1500; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const length = Math.random() * 6 + 2;
+                const angle = Math.random() * Math.PI * 2;
+                
+                const hue = 120 + Math.random() * 25;
+                const saturation = 40 + Math.random() * 25;
+                const lightness = 15 + Math.random() * 20;
+                
+                ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                ctx.lineWidth = Math.random() * 2 + 0.5;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(
+                    x + Math.cos(angle) * length,
+                    y + Math.sin(angle) * length
+                );
+                ctx.stroke();
+            }
+            
+            return canvas;
+        }
+        
+        // Função para baixar canvas como PNG
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // Gerar e exibir texturas
+        function generateAllTextures() {
+            const container = document.getElementById('texture-container');
+            
+            // Grama normal
+            const grassCanvas = generateGrassTexture(512);
+            const grassDiv = document.createElement('div');
+            grassDiv.className = 'texture-container';
+            grassDiv.innerHTML = '<h3>Grama Normal</h3>';
+            grassDiv.appendChild(grassCanvas);
+            const grassBtn = document.createElement('button');
+            grassBtn.textContent = 'Baixar PNG';
+            grassBtn.onclick = () => downloadCanvas(grassCanvas, 'grass_normal.png');
+            grassDiv.appendChild(grassBtn);
+            container.appendChild(grassDiv);
+            
+            // Grama escura
+            const darkGrassCanvas = generateDarkGrassTexture(512);
+            const darkGrassDiv = document.createElement('div');
+            darkGrassDiv.className = 'texture-container';
+            darkGrassDiv.innerHTML = '<h3>Grama Escura (Gótica)</h3>';
+            darkGrassDiv.appendChild(darkGrassCanvas);
+            const darkGrassBtn = document.createElement('button');
+            darkGrassBtn.textContent = 'Baixar PNG';
+            darkGrassBtn.onclick = () => downloadCanvas(darkGrassCanvas, 'grass_dark.png');
+            darkGrassDiv.appendChild(darkGrassBtn);
+            container.appendChild(darkGrassDiv);
+            
+            // Grama com pedras
+            const stonesCanvas = generateGrassWithStonesTexture(512);
+            const stonesDiv = document.createElement('div');
+            stonesDiv.className = 'texture-container';
+            stonesDiv.innerHTML = '<h3>Grama com Pedras</h3>';
+            stonesDiv.appendChild(stonesCanvas);
+            const stonesBtn = document.createElement('button');
+            stonesBtn.textContent = 'Baixar PNG';
+            stonesBtn.onclick = () => downloadCanvas(stonesCanvas, 'grass_stones.png');
+            stonesDiv.appendChild(stonesBtn);
+            container.appendChild(stonesDiv);
+            
+            // Grama tecnológica
+            const techCanvas = generateTechGrassTexture(512);
+            const techDiv = document.createElement('div');
+            techDiv.className = 'texture-container';
+            techDiv.innerHTML = '<h3>Grama Tecnológica</h3>';
+            techDiv.appendChild(techCanvas);
+            const techBtn = document.createElement('button');
+            techBtn.textContent = 'Baixar PNG';
+            techBtn.onclick = () => downloadCanvas(techCanvas, 'grass_tech.png');
+            techDiv.appendChild(techBtn);
+            container.appendChild(techDiv);
+        }
+        
+        // Gerar texturas quando a página carregar
+        window.onload = generateAllTextures;
+    </script>
+</body>
+</html>
