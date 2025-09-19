@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NRPG - Protótipo 3D RPG Gótico Hi-Tech</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2a 100%);
+            color: #00ffcc;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffcc;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.3);
+        }
+        
+        h1 {
+            color: #ff6b6b;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+        }
+        
+        .subtitle {
+            color: #9d4edd;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        
+        .description {
+            color: #bdc3c7;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+        
+        .game-link {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #00ffcc, #ff6b6b);
+            color: #000;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            margin: 10px;
+            box-shadow: 0 4px 15px rgba(0, 255, 204, 0.3);
+        }
+        
+        .game-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 204, 0.5);
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .feature {
+            background: rgba(0, 255, 204, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 204, 0.3);
+        }
+        
+        .feature h3 {
+            color: #00ffcc;
+            margin-bottom: 10px;
+        }
+        
+        .feature p {
+            color: #bdc3c7;
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(0, 255, 204, 0.3);
+            border-top: 3px solid #00ffcc;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏰 NRPG</h1>
+        <p class="subtitle">Protótipo 3D RPG Gótico Hi-Tech</p>
+        
+        <div class="description">
+            <p>Bem-vindo ao mundo de NRPG! Um protótipo 3D com temática Gótico Hi-Tech, 
+            combinando elementos medievais com tecnologia futurista. Explore uma cidade 
+            proceduralmente gerada com texturas PBR avançadas e sistema de câmera profissional.</p>
+        </div>
+        
+        <div>
+            <a href="prototipo_3d_advanced.html" class="game-link" onclick="showLoading()">
+                🎮 Jogar Agora (Versão Avançada)
+            </a>
+            <a href="prototipo_3d.html" class="game-link" onclick="showLoading()">
+                🎯 Versão Clássica
+            </a>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Carregando o jogo...</p>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🎮 Controles Avançados</h3>
+                <p>WASD para movimento, F para voo, SHIFT para acelerar, V para alternar câmera</p>
+            </div>
+            <div class="feature">
+                <h3>🏗️ Construção Modular</h3>
+                <p>Sistema de edifícios modulares com estilos medieval, tech e misto</p>
+            </div>
+            <div class="feature">
+                <h3>🎨 Texturas PBR</h3>
+                <p>Texturas procedurais fisicamente baseadas com mapas normais</p>
+            </div>
+            <div class="feature">
+                <h3>🌆 Cidade Procedural</h3>
+                <p>Geração automática de cidade Gótico Hi-Tech com variações</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+        
+        // Auto-redirect para a versão avançada após 3 segundos
+        setTimeout(() => {
+            if (!document.querySelector('.game-link:hover')) {
+                window.location.href = 'prototipo_3d_advanced.html';
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
