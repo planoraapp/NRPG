@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protótipo 3D - RPG Gótico Hi-Tech (Texturas Avançadas)</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #000; 
+            font-family: 'Courier New', Courier, monospace; 
+        }
+        canvas { 
+            display: block; 
+        }
+        #info-panel { 
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            padding: 15px; 
+            background-color: rgba(0, 0, 0, 0.7); 
+            color: #00ffcc; 
+            border: 2px solid #00ffcc; 
+            border-radius: 8px; 
+            font-size: 14px;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        }
+        #info-panel h3 {
+            margin: 0 0 10px 0;
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+        #info-panel p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="info-panel">
+        <h3>🏰 RPG Gótico Hi-Tech - Texturas Avançadas</h3>
+        <p><strong>Movimento:</strong> W, A, S, D</p>
+        <p><strong>Aceleração:</strong> SHIFT (segurar)</p>
+        <p><strong>Voo:</strong> F (ativar/desativar)</p>
+        <p><strong>Voo:</strong> Espaço (subir) / C (descer)</p>
+        <p><strong>Câmera:</strong> Botão direito + Arrastar</p>
+        <p><strong>Visão:</strong> V (1ª/3ª pessoa)</p>
+        <p><strong>Estilo:</strong> Low-Poly + PBR Textures</p>
+        <p><strong>Sistema:</strong> Modular Assets</p>
+    </div>
+    
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    { 
+        "imports": { 
+            "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js" 
+        } 
+    }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+
+        // ===== SISTEMA DE TEXTURAS PROCEDURAIS AVANÇADAS =====
+        
+        // Função para criar textura de parede de pedra medieval
+        function createStoneWallTexture(size = 512) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            // Base escura
+            ctx.fillStyle = '#3d3d3d';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Criar padrão de pedras irregulares
+            const stoneRows = 8;
+            const stoneCols = 8;
+            const stoneWidth = size / stoneCols;
+            const stoneHeight = size / stoneRows;
+            
+            for (let row = 0; row < stoneRows; row++) {
+                for (let col = 0; col < stoneCols; col++) {
+                    // Variação no tamanho das pedras
+                    const variation = 0.8 + Math.random() * 0.4;
+                    const stoneW = stoneWidth * variation;
+                    const stoneH = stoneHeight * variation;
+                    
+                    const x = col * stoneWidth + (stoneWidth - stoneW) / 2;
+                    const y = row * stoneHeight + (stoneHeight - stoneH) / 2;
+                    
+                    // Cor da pedra com variação
+                    const stoneHue = 0;
+                    const stoneSaturation = Math.random() * 10;
+                    const stoneLightness = 25 + Math.random() * 15;
+                    ctx.fillStyle = `hsl(${stoneHue}, ${stoneSaturation}%, ${stoneLightness}%)`;
+                    
+                    // Desenhar pedra com bordas irregulares
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + stoneW, y);
+                    ctx.lineTo(x + stoneW, y + stoneH);
+                    ctx.lineTo(x, y + stoneH);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Adicionar musgo ocasionalmente
+                    if (Math.random() < 0.3) {
+                        ctx.fillStyle = '#2e4027';
+                        ctx.beginPath();
+                        ctx.arc(x + stoneW/2, y + stoneH/2, stoneW/4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // Adicionar rejunte profundo
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = 2;
+            for (let row = 0; row <= stoneRows; row++) {
+                ctx.beginPath();
+                ctx.moveTo(0, row * stoneHeight);
+                ctx.lineTo(size, row * stoneHeight);
+                ctx.stroke();
+            }
+            for (let col = 0; col <= stoneCols; col++) {
+                ctx.beginPath();
+                ctx.moveTo(col * stoneWidth, 0);
+                ctx.lineTo(col * stoneWidth, size);
+                ctx.stroke();
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+        
+        // Função para criar mapa de normal de parede de pedra
+        function createStoneWallNormalMap(size = 512) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            // Base azul (normal padrão)
+            ctx.fillStyle = '#8080ff';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Criar relevo para rejunte
+            const stoneRows = 8;
+            const stoneCols = 8;
+            const stoneWidth = size / stoneCols;
+            const stoneHeight = size / stoneRows;
+            
+            // Rejunte mais escuro (relevo profundo)
+            ctx.fillStyle = '#4040ff';
+            for (let row = 0; row <= stoneRows; row++) {
+                ctx.fillRect(0, row * stoneHeight - 1, size, 2);
+            }
+            for (let col = 0; col <= stoneCols; col++) {
+                ctx.fillRect(col * stoneWidth - 1, 0, 2, size);
+            }
+            
+            // Adicionar textura granular nas pedras
+            for (let i = 0; i < 1000; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 2 + 1;
+                
+                ctx.fillStyle = `hsl(240, 50%, ${60 + Math.random() * 20}%)`;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+        
+        // Função para criar textura de painel de metal tecnológico
+        function createTechPanelTexture(size = 512) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            // Base cinza chumbo
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Criar painéis modulares
+            const panelRows = 6;
+            const panelCols = 6;
+            const panelWidth = size / panelCols;
+            const panelHeight = size / panelRows;
+            
+            for (let row = 0; row < panelRows; row++) {
+                for (let col = 0; col < panelCols; col++) {
+                    const x = col * panelWidth;
+                    const y = row * panelHeight;
+                    
+                    // Variação de cor do painel
+                    const variation = 0.9 + Math.random() * 0.2;
+                    const panelHue = 200;
+                    const panelSaturation = 20 + Math.random() * 10;
+                    const panelLightness = 25 + Math.random() * 10;
+                    ctx.fillStyle = `hsl(${panelHue}, ${panelSaturation}%, ${panelLightness}%)`;
+                    
+                    ctx.fillRect(x + 2, y + 2, panelWidth - 4, panelHeight - 4);
+                    
+                    // Adicionar parafusos nos cantos
+                    ctx.fillStyle = '#566573';
+                    ctx.beginPath();
+                    ctx.arc(x + 8, y + 8, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x + panelWidth - 8, y + 8, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x + 8, y + panelHeight - 8, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x + panelWidth - 8, y + panelHeight - 8, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Adicionar arranhões ocasionais
+                    if (Math.random() < 0.4) {
+                        ctx.strokeStyle = '#bdc3c7';
+                        ctx.lineWidth = Math.random() * 2 + 1;
+                        ctx.beginPath();
+                        ctx.moveTo(x + Math.random() * panelWidth, y + Math.random() * panelHeight);
+                        ctx.lineTo(x + Math.random() * panelWidth, y + Math.random() * panelHeight);
+                        ctx.stroke();
+                    }
+                    
+                    // Adicionar LEDs ocasionais
+                    if (Math.random() < 0.2) {
+                        ctx.fillStyle = '#00ffff';
+                        ctx.fillRect(x + panelWidth/2 - 4, y + panelHeight/2 - 4, 8, 8);
+                    }
+                }
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+        
+        // Função para criar textura de calçada de pedra
+        function createPavementTexture(size = 512) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            // Base de terra escura
+            ctx.fillStyle = '#6d5d4b';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Criar lajotas de pedra
+            const tileRows = 12;
+            const tileCols = 12;
+            const tileWidth = size / tileCols;
+            const tileHeight = size / tileRows;
+            
+            for (let row = 0; row < tileRows; row++) {
+                for (let col = 0; col < tileCols; col++) {
+                    // Variação no tamanho das lajotas
+                    const variation = 0.8 + Math.random() * 0.4;
+                    const tileW = tileWidth * variation;
+                    const tileH = tileHeight * variation;
+                    
+                    const x = col * tileWidth + (tileWidth - tileW) / 2;
+                    const y = row * tileHeight + (tileHeight - tileH) / 2;
+                    
+                    // Cor da lajota com variação
+                    const tileHue = 0;
+                    const tileSaturation = Math.random() * 5;
+                    const tileLightness = 55 + Math.random() * 15;
+                    ctx.fillStyle = `hsl(${tileHue}, ${tileSaturation}%, ${tileLightness}%)`;
+                    
+                    // Desenhar lajota com bordas arredondadas
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, tileW, tileH, 2);
+                    ctx.fill();
+                    
+                    // Adicionar desgaste no centro
+                    ctx.fillStyle = `hsl(${tileHue}, ${tileSaturation}%, ${tileLightness + 5}%)`;
+                    ctx.beginPath();
+                    ctx.roundRect(x + tileW/4, y + tileH/4, tileW/2, tileH/2, 1);
+                    ctx.fill();
+                }
+            }
+            
+            // Adicionar ervas daninhas nas juntas
+            for (let i = 0; i < 200; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const length = Math.random() * 6 + 2;
+                const angle = Math.random() * Math.PI * 2;
+                
+                ctx.strokeStyle = '#7a8a3a';
+                ctx.lineWidth = Math.random() * 2 + 0.5;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(
+                    x + Math.cos(angle) * length,
+                    y + Math.sin(angle) * length
+                );
+                ctx.stroke();
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+        
+        // Função para criar textura de terra
+        function createDirtTexture(size = 512) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            // Base de terra escura
+            ctx.fillStyle = '#594a3a';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Adicionar variações de cor
+            for (let i = 0; i < 500; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 8 + 2;
+                
+                const dirtHue = 20 + Math.random() * 20;
+                const dirtSaturation = 20 + Math.random() * 20;
+                const dirtLightness = 25 + Math.random() * 15;
+                
+                ctx.fillStyle = `hsl(${dirtHue}, ${dirtSaturation}%, ${dirtLightness}%)`;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Adicionar pequenas pedras
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 3 + 1;
+                
+                ctx.fillStyle = '#7f8c8d';
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Adicionar galhos e folhas
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const length = Math.random() * 10 + 5;
+                const angle = Math.random() * Math.PI * 2;
+                
+                ctx.strokeStyle = '#8b4513';
+                ctx.lineWidth = Math.random() * 2 + 1;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(
+                    x + Math.cos(angle) * length,
+                    y + Math.sin(angle) * length
+                );
+                ctx.stroke();
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+        
+        // Função para criar textura de grama
+        function createGrassTexture(size = 512) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            // Base de terra
+            ctx.fillStyle = '#6d5d4b';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Adicionar grama
+            for (let i = 0; i < 2000; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const length = Math.random() * 8 + 2;
+                const angle = Math.random() * Math.PI * 2;
+                
+                const grassHue = 120 + Math.random() * 30;
+                const grassSaturation = 40 + Math.random() * 30;
+                const grassLightness = 30 + Math.random() * 20;
+                
+                ctx.strokeStyle = `hsl(${grassHue}, ${grassSaturation}%, ${grassLightness}%)`;
+                ctx.lineWidth = Math.random() * 2 + 0.5;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(
+                    x + Math.cos(angle) * length,
+                    y + Math.sin(angle) * length
+                );
+                ctx.stroke();
+            }
+            
+            // Adicionar trevos e ervas daninhas
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 3 + 1;
+                
+                ctx.fillStyle = '#7a8a3a';
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+        
+        // ===== INICIALIZAÇÃO DA CENA =====
+        
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0x0a0a1a, 20, 100);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 10);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setClearColor(0x0a0a1a);
+        document.body.appendChild(renderer.domElement);
+
+        // Iluminação
+        const ambientLight = new THREE.AmbientLight(0x404080, 0.4);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 20, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 50;
+        directionalLight.shadow.camera.left = -25;
+        directionalLight.shadow.camera.right = 25;
+        directionalLight.shadow.camera.top = 25;
+        directionalLight.shadow.camera.bottom = -25;
+        scene.add(directionalLight);
+
+        // Luzes de neon
+        const neonLight1 = new THREE.PointLight(0x00ffcc, 0.5, 30);
+        neonLight1.position.set(15, 8, 15);
+        scene.add(neonLight1);
+
+        const neonLight2 = new THREE.PointLight(0xff6b6b, 0.4, 25);
+        neonLight2.position.set(-20, 6, -10);
+        scene.add(neonLight2);
+
+        const neonLight3 = new THREE.PointLight(0x9d4edd, 0.3, 20);
+        neonLight3.position.set(0, 10, -25);
+        scene.add(neonLight3);
+
+        // ===== CRIAÇÃO DAS TEXTURAS =====
+        
+        const stoneWallTexture = createStoneWallTexture(512);
+        const stoneWallNormalMap = createStoneWallNormalMap(512);
+        const techPanelTexture = createTechPanelTexture(512);
+        const pavementTexture = createPavementTexture(512);
+        const dirtTexture = createDirtTexture(512);
+        const grassTexture = createGrassTexture(512);
+
+        // ===== MATERIAIS PBR =====
+        
+        const stoneWallMaterial = new THREE.MeshStandardMaterial({
+            map: stoneWallTexture,
+            normalMap: stoneWallNormalMap,
+            color: 0x4a4a4a,
+            roughness: 0.8,
+            metalness: 0.1
+        });
+
+        const techPanelMaterial = new THREE.MeshStandardMaterial({
+            map: techPanelTexture,
+            color: 0x2c3e50,
+            roughness: 0.4,
+            metalness: 0.7
+        });
+
+        const pavementMaterial = new THREE.MeshStandardMaterial({
+            map: pavementTexture,
+            color: 0x7f8c8d,
+            roughness: 0.9,
+            metalness: 0.0
+        });
+
+        const dirtMaterial = new THREE.MeshStandardMaterial({
+            map: dirtTexture,
+            color: 0x594a3a,
+            roughness: 0.8,
+            metalness: 0.0
+        });
+
+        const grassMaterial = new THREE.MeshStandardMaterial({
+            map: grassTexture,
+            color: 0x7a8a3a,
+            roughness: 0.8,
+            metalness: 0.0
+        });
+
+        // ===== CRIAÇÃO DO CHÃO =====
+        
+        const groundGeometry = new THREE.PlaneGeometry(200, 200, 50, 50);
+        
+        // Criar variação de materiais baseada na posição
+        const vertices = groundGeometry.attributes.position.array;
+        const colors = [];
+        
+        for (let i = 0; i < vertices.length; i += 3) {
+            const x = vertices[i];
+            const z = vertices[i + 2];
+            
+            // Criar padrão de variação
+            const noise1 = Math.sin(x * 0.01) * Math.cos(z * 0.01);
+            const noise2 = Math.sin(x * 0.03) * Math.cos(z * 0.03);
+            const variation = (noise1 + noise2) * 0.5;
+            
+            if (variation > 0.3) {
+                // Área de grama
+                colors.push(0.5, 0.8, 0.3); // Verde
+            } else if (variation > -0.2) {
+                // Área de terra
+                colors.push(0.6, 0.4, 0.2); // Marrom
+            } else {
+                // Área de calçada
+                colors.push(0.7, 0.7, 0.7); // Cinza
+            }
+        }
+        
+        groundGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        
+        const ground = new THREE.Mesh(groundGeometry, grassMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // ===== CRIAÇÃO DE PRÉDIOS MODULARES =====
+        
+        function createModularBuilding(x, z, width, height, depth, style = 'mixed') {
+            const buildingGroup = new THREE.Group();
+            
+            // Escolher material baseado no estilo
+            let wallMaterial;
+            if (style === 'medieval') {
+                wallMaterial = stoneWallMaterial;
+            } else if (style === 'tech') {
+                wallMaterial = techPanelMaterial;
+            } else {
+                // Mixed: usar ambos
+                wallMaterial = Math.random() > 0.5 ? stoneWallMaterial : techPanelMaterial;
+            }
+            
+            // Corpo principal
+            const mainBuilding = new THREE.Mesh(
+                new THREE.BoxGeometry(width, height, depth), 
+                wallMaterial
+            );
+            mainBuilding.position.y = height / 2;
+            mainBuilding.castShadow = true;
+            mainBuilding.receiveShadow = true;
+            buildingGroup.add(mainBuilding);
+            
+            // Torres góticas (se estilo medieval ou mixed)
+            if (style === 'medieval' || style === 'mixed') {
+                const towerHeight = height * 0.8;
+                const towerWidth = Math.min(width, depth) * 0.3;
+                
+                for (let i = 0; i < 4; i++) {
+                    const tower = new THREE.Mesh(
+                        new THREE.CylinderGeometry(towerWidth/2, towerWidth/2, towerHeight, 8),
+                        stoneWallMaterial
+                    );
+                    tower.position.y = towerHeight / 2;
+                    tower.position.x = (i % 2 === 0 ? 1 : -1) * (width/2 - towerWidth/2);
+                    tower.position.z = (i < 2 ? 1 : -1) * (depth/2 - towerWidth/2);
+                    tower.castShadow = true;
+                    buildingGroup.add(tower);
+                    
+                    // Telhado cônico
+                    const roof = new THREE.Mesh(
+                        new THREE.ConeGeometry(towerWidth/2, towerHeight * 0.3, 8),
+                        new THREE.MeshStandardMaterial({ 
+                            color: 0x1a1a2a,
+                            metalness: 0.8,
+                            roughness: 0.2
+                        })
+                    );
+                    roof.position.y = towerHeight + roof.geometry.parameters.height/2;
+                    roof.position.x = tower.position.x;
+                    roof.position.z = tower.position.z;
+                    roof.castShadow = true;
+                    buildingGroup.add(roof);
+                }
+            }
+            
+            // Janelas com luzes neon
+            const windowCount = Math.floor(height / 3);
+            for (let i = 0; i < windowCount; i++) {
+                const windowY = (i + 1) * (height / (windowCount + 1));
+                
+                // Janela frontal
+                const frontWindow = new THREE.Mesh(
+                    new THREE.PlaneGeometry(width * 0.6, height * 0.1),
+                    new THREE.MeshStandardMaterial({ 
+                        color: 0x00ffcc,
+                        emissive: 0x004433,
+                        transparent: true,
+                        opacity: 0.8
+                    })
+                );
+                frontWindow.position.set(0, windowY, depth/2 + 0.01);
+                buildingGroup.add(frontWindow);
+                
+                // Janela traseira
+                const backWindow = new THREE.Mesh(
+                    new THREE.PlaneGeometry(width * 0.6, height * 0.1),
+                    new THREE.MeshStandardMaterial({ 
+                        color: 0xff6b6b,
+                        emissive: 0x440022,
+                        transparent: true,
+                        opacity: 0.8
+                    })
+                );
+                backWindow.position.set(0, windowY, -depth/2 - 0.01);
+                buildingGroup.add(backWindow);
+            }
+            
+            // Luzes de neon
+            const neonColor = new THREE.Color().setHSL(Math.random(), 0.8, 0.6);
+            const neonLight = new THREE.PointLight(neonColor, 0.4, 20);
+            neonLight.position.set(0, height * 0.8, 0);
+            buildingGroup.add(neonLight);
+            
+            // Hologramas flutuantes (se estilo tech ou mixed)
+            if (style === 'tech' || (style === 'mixed' && Math.random() > 0.5)) {
+                const hologram = new THREE.Mesh(
+                    new THREE.PlaneGeometry(width * 0.8, height * 0.3),
+                    new THREE.MeshStandardMaterial({ 
+                        color: neonColor,
+                        transparent: true,
+                        opacity: 0.3,
+                        side: THREE.DoubleSide
+                    })
+                );
+                hologram.position.set(0, height + 2, 0);
+                hologram.rotation.x = Math.PI / 4;
+                buildingGroup.add(hologram);
+            }
+            
+            buildingGroup.position.set(x, 0, z);
+            return buildingGroup;
+        }
+        
+        // ===== CRIAÇÃO DA CIDADE =====
+        
+        // Criar prédios variados
+        for (let i = 0; i < 25; i++) {
+            const height = Math.random() * 25 + 8;
+            const width = Math.random() * 8 + 4;
+            const depth = Math.random() * 8 + 4;
+            const style = ['medieval', 'tech', 'mixed'][Math.floor(Math.random() * 3)];
+            
+            const building = createModularBuilding(
+                (Math.random() - 0.5) * 150, 
+                (Math.random() - 0.5) * 150,
+                width, height, depth, style
+            );
+            
+            scene.add(building);
+        }
+        
+        // Catedral central (medieval)
+        const cathedral = createModularBuilding(0, 0, 15, 35, 20, 'medieval');
+        scene.add(cathedral);
+        
+        // Torres de energia (tech)
+        for (let i = 0; i < 5; i++) {
+            const energyTower = new THREE.Group();
+            
+            const towerHeight = 40 + Math.random() * 20;
+            const tower = new THREE.Mesh(
+                new THREE.CylinderGeometry(2, 3, towerHeight, 12),
+                techPanelMaterial
+            );
+            tower.position.y = towerHeight / 2;
+            tower.castShadow = true;
+            energyTower.add(tower);
+            
+            // Anéis de energia
+            for (let j = 0; j < 3; j++) {
+                const ring = new THREE.Mesh(
+                    new THREE.TorusGeometry(4 + j * 2, 0.2, 8, 16),
+                    new THREE.MeshStandardMaterial({ 
+                        color: 0x00ffcc,
+                        emissive: 0x004433,
+                        transparent: true,
+                        opacity: 0.7
+                    })
+                );
+                ring.position.y = towerHeight * 0.3 + j * towerHeight * 0.2;
+                energyTower.add(ring);
+            }
+            
+            energyTower.position.set(
+                (Math.random() - 0.5) * 200, 
+                0, 
+                (Math.random() - 0.5) * 200
+            );
+            scene.add(energyTower);
+        }
+
+        // ===== PERSONAGEM E CONTROLES =====
+        
+        const playerGeometry = new THREE.CapsuleGeometry(0.5, 1, 4, 16);
+        const playerMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x00ffcc,
+            emissive: 0x001111,
+            roughness: 0.3,
+            metalness: 0.7
+        });
+        const player = new THREE.Mesh(playerGeometry, playerMaterial);
+        player.position.y = 1.5;
+        player.castShadow = true;
+        scene.add(player);
+
+        const keysPressed = {};
+        let isRightMouseDown = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let cameraOffset = new THREE.Vector3(0, 5, 10);
+        let playerRotation = 0;
+        let cameraDistance = 10;
+        let cameraHeight = 5;
+        let isFirstPerson = false;
+        let isFlying = false;
+        let playerVelocity = new THREE.Vector3(0, 0, 0);
+        
+        // Variáveis para controle de câmera em primeira pessoa
+        let cameraRotationX = 0; // Rotação vertical
+        let cameraRotationY = 0; // Rotação horizontal
+
+        document.addEventListener('keydown', (e) => { 
+            keysPressed[e.key.toLowerCase()] = true; 
+            
+            if (e.key.toLowerCase() === 'v') {
+                isFirstPerson = !isFirstPerson;
+                if (isFirstPerson) {
+                    cameraDistance = 0;
+                    cameraHeight = 1.5;
+                } else {
+                    cameraDistance = 10;
+                    cameraHeight = 5;
+                }
+            }
+            
+            // Toggle voo com tecla F
+            if (e.key.toLowerCase() === 'f') {
+                isFlying = !isFlying;
+                if (!isFlying) {
+                    // Se parou de voar, aplicar gravidade gradualmente
+                    playerVelocity.y = Math.min(playerVelocity.y, 0);
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => { 
+            keysPressed[e.key.toLowerCase()] = false; 
+        });
+
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        document.addEventListener('mousedown', (e) => { 
+            if (e.button === 2) { 
+                isRightMouseDown = true; 
+                previousMousePosition = { x: e.clientX, y: e.clientY }; 
+            } 
+        });
+
+        document.addEventListener('mouseup', (e) => { 
+            if (e.button === 2) { 
+                isRightMouseDown = false; 
+            } 
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isRightMouseDown) return;
+            
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
+            
+            if (isFirstPerson) {
+                // Controle de câmera em primeira pessoa
+                cameraRotationY -= deltaX * 0.005; // Rotação horizontal
+                cameraRotationX -= deltaY * 0.005; // Rotação vertical
+                
+                // Limitar rotação vertical para não virar de cabeça para baixo
+                cameraRotationX = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, cameraRotationX));
+            } else {
+                // Controle de câmera em terceira pessoa (sistema original)
+                const yAxis = new THREE.Vector3(0, 1, 0);
+                cameraOffset.applyAxisAngle(yAxis, -deltaX * 0.005);
+                
+                const xAxis = new THREE.Vector3().crossVectors(yAxis, cameraOffset).normalize();
+                cameraOffset.applyAxisAngle(xAxis, -deltaY * 0.005);
+                
+                // Limitar altura da câmera
+                if (cameraOffset.y < 2) cameraOffset.y = 2;
+                if (cameraOffset.y > 15) cameraOffset.y = 15;
+            }
+            
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        // ===== LOOP DE ANIMAÇÃO =====
+        
+        const clock = new THREE.Clock();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            
+            // Calcular velocidade baseada no Shift
+            const baseSpeed = 5;
+            const speedMultiplier = keysPressed['shift'] ? 2.5 : 1.0;
+            const moveSpeed = baseSpeed * speedMultiplier * delta;
+            
+            const moveVector = new THREE.Vector3();
+            
+            // Obter direção da câmera
+            let cameraDirection;
+            let rightDirection;
+            
+            if (isFirstPerson) {
+                // Na primeira pessoa, usar a rotação da câmera diretamente
+                cameraDirection = new THREE.Vector3(
+                    Math.sin(cameraRotationY),
+                    0,
+                    Math.cos(cameraRotationY)
+                );
+                
+                rightDirection = new THREE.Vector3(
+                    Math.cos(cameraRotationY),
+                    0,
+                    -Math.sin(cameraRotationY)
+                );
+            } else {
+                // Na terceira pessoa, usar a direção da câmera
+                cameraDirection = new THREE.Vector3();
+                camera.getWorldDirection(cameraDirection);
+                
+                // Se não estiver voando, ignorar componente Y para movimento horizontal
+                if (!isFlying) {
+                    cameraDirection.y = 0;
+                }
+                cameraDirection.normalize();
+                
+                rightDirection = new THREE.Vector3();
+                rightDirection.crossVectors(cameraDirection, new THREE.Vector3(0, 1, 0));
+                rightDirection.normalize();
+            }
+            
+            // Movimento horizontal
+            if (keysPressed['w']) {
+                moveVector.add(cameraDirection.clone().multiplyScalar(moveSpeed));
+            }
+            if (keysPressed['s']) {
+                moveVector.add(cameraDirection.clone().multiplyScalar(-moveSpeed));
+            }
+            if (keysPressed['a']) {
+                moveVector.add(rightDirection.clone().multiplyScalar(-moveSpeed));
+            }
+            if (keysPressed['d']) {
+                moveVector.add(rightDirection.clone().multiplyScalar(moveSpeed));
+            }
+            
+            // Movimento vertical (voo)
+            if (isFlying) {
+                if (keysPressed[' ']) { // Espaço para subir
+                    moveVector.y += moveSpeed;
+                }
+                if (keysPressed['c']) { // C para descer
+                    moveVector.y -= moveSpeed;
+                }
+            } else {
+                // Gravidade quando não está voando
+                const gravity = 15 * delta;
+                playerVelocity.y -= gravity;
+                
+                // Verificar colisão com o chão
+                if (player.position.y <= 1.5) {
+                    player.position.y = 1.5;
+                    playerVelocity.y = 0;
+                }
+            }
+            
+            // Aplicar movimento
+            player.position.add(moveVector);
+            player.position.add(playerVelocity.clone().multiplyScalar(delta));
+            
+            // Atualizar rotação do personagem
+            if (moveVector.length() > 0) {
+                if (isFirstPerson) {
+                    // Na primeira pessoa, o personagem sempre rotaciona com a câmera
+                    // independente do movimento
+                    playerRotation = cameraRotationY;
+                } else {
+                    // Na terceira pessoa, o personagem rotaciona na direção do movimento
+                    const moveDirection = moveVector.clone().normalize();
+                    playerRotation = Math.atan2(moveDirection.x, moveDirection.z);
+                }
+                player.rotation.y = playerRotation;
+            } else {
+                // Mesmo quando não está se movendo, manter a rotação sincronizada
+                if (isFirstPerson) {
+                    playerRotation = cameraRotationY;
+                    player.rotation.y = playerRotation;
+                }
+            }
+            
+            if (isFirstPerson) {
+                // Posicionar câmera na posição dos olhos do personagem
+                const eyeHeight = 1.6; // Altura dos olhos
+                
+                // Posicionar câmera na posição do personagem
+                camera.position.copy(player.position);
+                camera.position.y += eyeHeight;
+                
+                // Aplicar rotação da câmera (sem inclinação Z)
+                camera.rotation.x = cameraRotationX;
+                camera.rotation.y = cameraRotationY;
+                camera.rotation.z = 0; // Sempre manter vertical
+                
+                // Forçar a câmera a olhar na direção correta sem inclinação
+                const lookDirection = new THREE.Vector3(
+                    Math.sin(cameraRotationY) * Math.cos(cameraRotationX),
+                    Math.sin(cameraRotationX),
+                    Math.cos(cameraRotationY) * Math.cos(cameraRotationX)
+                );
+                
+                const lookTarget = camera.position.clone().add(lookDirection);
+                camera.lookAt(lookTarget);
+            } else {
+                let targetCameraPosition = player.position.clone().add(cameraOffset);
+                
+                if (targetCameraPosition.y < 1) {
+                    targetCameraPosition.y = 1;
+                }
+                
+                camera.position.lerp(targetCameraPosition, 0.2);
+                camera.lookAt(player.position);
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

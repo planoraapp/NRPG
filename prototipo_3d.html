@@ -34,16 +34,72 @@
         #info-panel p {
             margin: 5px 0;
         }
+        
+        /* === ESTILOS DO EDITOR === */
+        .tool-btn, .brush-btn {
+            padding: 8px 12px;
+            background: #2a2a3a;
+            color: #00ffcc;
+            border: 1px solid #00ffcc;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tool-btn:hover, .brush-btn:hover {
+            background: #00ffcc;
+            color: #000;
+        }
+        
+        .tool-btn.active, .brush-btn.active {
+            background: #00ffcc;
+            color: #000;
+        }
+        
+        .asset-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: #1a1a2a;
+            border: 1px solid #333;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .asset-item:hover {
+            background: #2a2a3a;
+            border-color: #00ffcc;
+        }
+        
+        .property-group {
+            margin: 10px 0;
+        }
+        
+        .property-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #00ffcc;
+        }
+        
+        .property-group input {
+            width: 100%;
+            padding: 5px;
+            background: #1a1a2a;
+            color: #00ffcc;
+            border: 1px solid #333;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
-    <div id="info-panel">
+    <div id="info-panel" style="display: none;">
         <h3>🌙 RPG Gótico Hi-Tech - Protótipo</h3>
         <p><strong>Movimento:</strong> W, A, S, D</p>
         <p><strong>Corrida:</strong> SHIFT + WASD</p>
         <p><strong>Voo:</strong> F (ativar/desativar)</p>
         <p><strong>Voo:</strong> Espaço (subir) / C (descer)</p>
         <p><strong>Pulo:</strong> Espaço (no chão)</p>
+        <p><strong>Ataque:</strong> E (animação FBX)</p>
         <p><strong>Câmera:</strong> Botão direito + Arrastar</p>
         <p><strong>Visão:</strong> V (1ª/3ª pessoa)</p>
         <p><strong>Texturas:</strong> CyberSample 4K + VoxelCity</p>
@@ -54,27 +110,89 @@
             <p id="running-status" style="color: #00ffcc; display: none;">🏃 CORRENDO</p>
         </div>
     </div>
+
+    <!-- Botão de Toggle do Editor (sempre visível) -->
+    <button id="toggle-editor" style="position: absolute; bottom: 20px; left: 20px; padding: 10px; background: #00ffcc; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; z-index: 1000;">
+        🔧 EDITOR
+    </button>
+
+    <!-- === INTERFACE DO EDITOR DE MAPAS === -->
+    <div id="editor-ui" style="display: none;">
+
+        <!-- Barra de Ferramentas Superior -->
+        <div id="toolbar" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); padding: 10px; border-radius: 5px; display: flex; gap: 10px;">
+            <button id="tool-translate" class="tool-btn active" data-tool="translate">↔️ Mover</button>
+            <button id="tool-rotate" class="tool-btn" data-tool="rotate">🔄 Rotacionar</button>
+            <button id="tool-scale" class="tool-btn" data-tool="scale">📏 Escalar</button>
+            <button id="tool-paint" class="tool-btn" data-tool="paint">🎨 Pintar</button>
+        </div>
+
+        <!-- Painel Esquerdo - Biblioteca de Assets -->
+        <div id="asset-library" style="position: absolute; top: 60px; left: 10px; width: 250px; height: 400px; background: rgba(0, 0, 0, 0.8); color: #00ffcc; padding: 15px; border-radius: 5px; overflow-y: auto;">
+            <h3 style="margin-top: 0; color: #00ffcc;">📦 Biblioteca de Assets</h3>
+            <div id="asset-list">
+                <p style="color: #666;">Carregando assets...</p>
+            </div>
+        </div>
+
+        <!-- Painel Direito - Inspetor de Propriedades -->
+        <div id="inspector" style="position: absolute; top: 60px; right: 10px; width: 250px; height: 400px; background: rgba(0, 0, 0, 0.8); color: #00ffcc; padding: 15px; border-radius: 5px;">
+            <h3 style="margin-top: 0; color: #00ffcc;">⚙️ Propriedades</h3>
+            <div id="object-properties">
+                <p style="color: #666;">Nenhum objeto selecionado</p>
+            </div>
+        </div>
+
+        <!-- Painel de Pincéis de Terreno -->
+        <div id="terrain-brushes" style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); padding: 10px; border-radius: 5px; display: none;">
+            <h4 style="margin-top: 0; color: #00ffcc;">🎨 Pincéis de Terreno</h4>
+            <div style="display: flex; gap: 10px;">
+                <button class="brush-btn active" data-brush="grass">🌱 Grama</button>
+                <button class="brush-btn" data-brush="dirt">🟫 Terra</button>
+                <button class="brush-btn" data-brush="stone">🪨 Pedra</button>
+                <button class="brush-btn" data-brush="metal">⚙️ Metal</button>
+            </div>
+        </div>
+    </div>
     
     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
     <script type="importmap">
     { 
         "imports": { 
-            "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js" 
+            "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/"
         } 
     }
     </script>
     
     <script type="module">
         import * as THREE from 'three';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
         // Inicialização da cena
         const scene = new THREE.Scene();
+        
+        // === SISTEMA DE EDITOR DE MAPAS ===
+        let isEditMode = false;
+        let selectedObject = null;
+        let transformControls = null;
+        let gridHelper = null;
+        let assetLibrary = {};
+        let placedObjects = [];
+        let currentTool = 'translate';
+        let currentBrush = 'grass';
+        let isPlacingAsset = false;
+        let assetToPlace = null;
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
         
         // Inicializar texture loader
         const textureLoader = new THREE.TextureLoader();
         
         // Configuração da névoa para atmosfera sombria
-        scene.fog = new THREE.Fog(0x0a0a1a, 20, 100);
+        scene.fog = new THREE.Fog(0x87CEEB, 50, 200);
         
         // Configuração da câmera
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -86,16 +204,16 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.setClearColor(0x0a0a1a);
+        renderer.setClearColor(0x87CEEB);
         document.body.appendChild(renderer.domElement);
 
-        // Iluminação ambiente (tons azulados)
-        const ambientLight = new THREE.AmbientLight(0x404080, 0.4);
+        // Iluminação ambiente mais natural
+        const ambientLight = new THREE.AmbientLight(0x606060, 1.5);
         scene.add(ambientLight);
 
-        // Luz direcional principal
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(10, 20, 5);
+        // Luz solar direcional
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+        directionalLight.position.set(50, 50, 25);
         directionalLight.castShadow = true;
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
@@ -104,64 +222,30 @@
         directionalLight.shadow.camera.left = -25;
         directionalLight.shadow.camera.right = 25;
         directionalLight.shadow.camera.top = 25;
-        directionalLight.shadow.camera.bottom = -25;
+        directionalLight.shadow.camera.bottom = -50;
         scene.add(directionalLight);
+        
+        // Iluminação adicional para melhorar as cores
+        // const pointLight1 = new THREE.PointLight(0x00ffcc, 0.5, 30); ... (removido)
+        // const pointLight2 = new THREE.PointLight(0xff6b6b, 0.3, 20); ... (removido)
+        // etc...
 
-        // Luzes de neon para atmosfera cyberpunk
-        const neonLight1 = new THREE.PointLight(0x00ffcc, 0.5, 30);
-        neonLight1.position.set(15, 8, 15);
-        scene.add(neonLight1);
-
-        const neonLight2 = new THREE.PointLight(0xff6b6b, 0.4, 25);
-        neonLight2.position.set(-20, 6, -10);
-        scene.add(neonLight2);
-
-        const neonLight3 = new THREE.PointLight(0x9d4edd, 0.3, 20);
-        neonLight3.position.set(0, 10, -25);
-        scene.add(neonLight3);
-
-        // Chão do cenário com textura procedural
+        // Chão do cenário com textura de grama/terra
         const groundGeometry = new THREE.PlaneGeometry(200, 200, 50, 50);
         
-        // Criar textura procedural para o chão
-        const groundTexture = new THREE.DataTexture(
-            new Uint8Array(256 * 256 * 3), 256, 256, THREE.RGBFormat
-        );
-        
-        // Gerar padrão de piso tecnológico
-        const data = groundTexture.image.data;
-        for (let i = 0; i < data.length; i += 3) {
-            const x = (i / 3) % 256;
-            const y = Math.floor((i / 3) / 256);
-            
-            // Padrão de hexágonos e linhas
-            const hexPattern = Math.sin(x * 0.1) * Math.cos(y * 0.1) > 0.3;
-            const linePattern = (x % 32 < 2) || (y % 32 < 2);
-            
-            if (hexPattern) {
-                data[i] = 20;     // R
-                data[i + 1] = 25; // G  
-                data[i + 2] = 35; // B
-            } else if (linePattern) {
-                data[i] = 0;      // R
-                data[i + 1] = 255; // G
-                data[i + 2] = 204; // B
-            } else {
-                data[i] = 15;     // R
-                data[i + 1] = 20; // G
-                data[i + 2] = 30; // B
-            }
-        }
-        groundTexture.needsUpdate = true;
+        // Gerar texturas 3D para o chão
+        const groundTextures = generate3DTextures(512, 'grass_terrain');
         
         const groundMaterial = new THREE.MeshStandardMaterial({ 
-            map: groundTexture,
-            color: 0x1a1a2a,
-            roughness: 0.6,
-            metalness: 0.3,
-            emissive: 0x001122
+            map: groundTextures.albedo,
+            normalMap: groundTextures.normal,
+            roughnessMap: groundTextures.roughness,
+            metalnessMap: groundTextures.metalness,
+            displacementMap: groundTextures.height,
+            displacementScale: 0.2
         });
         const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.name = 'ground'; // Nome para o sistema de pintura
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
@@ -186,15 +270,15 @@
             return texture;
         }
         
-        // Carregar texturas de prédios
-        cyberTextures.buildings1 = loadCyberTexture('CyberSample/FreeSample/Textures/T_Buildings_001Diffuse- 4K.png', 'Buildings 1');
-        cyberTextures.buildings2 = loadCyberTexture('CyberSample/FreeSample/Textures/T_Buildings_002Diffuse- 4K.png', 'Buildings 2');
-        cyberTextures.buildingsEmissive1 = loadCyberTexture('CyberSample/FreeSample/Textures/BAKE_Buildings_001Emissive- 4K.png', 'Buildings Emissive 1');
-        cyberTextures.buildingsEmissive2 = loadCyberTexture('CyberSample/FreeSample/Textures/BAKE_Buildings_002Emissive- 4K.png', 'Buildings Emissive 2');
-        cyberTextures.roads = loadCyberTexture('CyberSample/FreeSample/Textures/T_RoadsDiffuse- 4K.png', 'Roads');
-        cyberTextures.roadsEmissive = loadCyberTexture('CyberSample/FreeSample/Textures/BAKE_RoadsEmissive- 4K.png', 'Roads Emissive');
-        cyberTextures.props = loadCyberTexture('CyberSample/FreeSample/Textures/T_PropsDiffuse- 4K.png', 'Props');
-        cyberTextures.propsEmissive = loadCyberTexture('CyberSample/FreeSample/Textures/BAKE_PropsEmissive- 4K.png', 'Props Emissive');
+        // Carregar texturas de prédios (caminhos corrigidos)
+        cyberTextures.buildings1 = loadCyberTexture('CyberSample/FreeSample/Textures/T_Buildings_001Diffuse-4K.png', 'Buildings 1');
+        cyberTextures.buildings2 = loadCyberTexture('CyberSample/FreeSample/Textures/T_Buildings_002Diffuse-4K.png', 'Buildings 2');
+        cyberTextures.buildingsEmissive1 = loadCyberTexture('CyberSample/FreeSample/Textures/BAKE_Buildings_001Emissive-4K.png', 'Buildings Emissive 1');
+        cyberTextures.buildingsEmissive2 = loadCyberTexture('CyberSample/FreeSample/Textures/BAKE_Buildings_002Emissive-4K.png', 'Buildings Emissive 2');
+        cyberTextures.roads = loadCyberTexture('CyberSample/FreeSample/Textures/T_RoadsDiffuse-4K.png', 'Roads');
+        cyberTextures.roadsEmissive = loadCyberTexture('CyberSample/FreeSample/Textures/BAKE_RoadsEmissive-4K.png', 'Roads Emissive');
+        cyberTextures.props = loadCyberTexture('CyberSample/FreeSample/Textures/T_PropsDiffuse-4K.png', 'Props');
+        cyberTextures.propsEmissive = loadCyberTexture('CyberSample/FreeSample/Textures/BAKE_PropsEmissive-4K.png', 'Props Emissive');
         
         // Carregar texturas VoxelCity
         cyberTextures.voxelBuildings1 = loadCyberTexture('CyberSample/FreeSample/Textures/VoxelCity_CompositeBuildings_Optimized-0_diffuse.png', 'Voxel Buildings 1');
@@ -243,133 +327,71 @@
             return texture;
         }
 
-        // Função para criar prédio gótico hi-tech
-        function createGothicTechBuilding(x, z, width, height, depth) {
-            const buildingGroup = new THREE.Group();
+        // Versão base do construtor de prédios
+        function createGothicTechBuilding(options) {
+            const building = new THREE.Group();
+            building.userData.isProceduralBuilding = true;
+            building.position.set(options.x, options.y, options.z);
+            building.rotation.y = (Math.random() - 0.5) * 0.2; // Adiciona leve rotação
             
-            // Escolher textura aleatória
-            const textureIndex = Math.floor(Math.random() * 2) + 1;
-            const buildingTexture = textureIndex === 1 ? cyberTextures.buildings1 : cyberTextures.buildings2;
-            const emissiveTexture = textureIndex === 1 ? cyberTextures.buildingsEmissive1 : cyberTextures.buildingsEmissive2;
-            
-            // Configurar repetição da textura baseada no tamanho do prédio
-            const repeatX = Math.max(1, Math.floor(width / 4));
-            const repeatY = Math.max(1, Math.floor(height / 8));
-            const repeatZ = Math.max(1, Math.floor(depth / 4));
-            
-            if (buildingTexture) {
-                buildingTexture.repeat.set(repeatX, repeatY);
-            }
-            if (emissiveTexture) {
-                emissiveTexture.repeat.set(repeatX, repeatY);
-            }
-            
-            // Material base do prédio com texturas reais
-            const buildingMaterial = new THREE.MeshStandardMaterial({ 
-                map: buildingTexture,
-                emissiveMap: emissiveTexture,
-                emissive: new THREE.Color().setHSL(0.6, 0.3, 0.1),
-                roughness: 0.3 + Math.random() * 0.2,
-                metalness: 0.4 + Math.random() * 0.3
-            });
-            
-            // Corpo principal do prédio
-            const mainBuilding = new THREE.Mesh(
-                new THREE.BoxGeometry(width, height, depth), 
-                buildingMaterial
-            );
-            mainBuilding.position.y = height / 2;
-            mainBuilding.castShadow = true;
-            mainBuilding.receiveShadow = true;
-            buildingGroup.add(mainBuilding);
-            
-            // Torres góticas nos cantos
-            const towerHeight = height * 0.8;
-            const towerWidth = Math.min(width, depth) * 0.3;
-            
+            const width = 5 + Math.random() * 3;
+            const depth = 5 + Math.random() * 3;
+            const height = 9 + Math.random() * 8;
+
+            // --- Materiais ---
+            const plasterTextures = generate3DTextures(256, 'plaster_wall');
+            const plasterMaterial = new THREE.MeshStandardMaterial({ map: plasterTextures.albedo, normalMap: plasterTextures.normal, roughnessMap: plasterTextures.roughness });
+            const woodTextures = generate3DTextures(256, 'wood_planks');
+            const woodMaterial = new THREE.MeshStandardMaterial({ map: woodTextures.albedo, normalMap: woodTextures.normal, roughnessMap: woodTextures.roughness });
+
+            // --- Montagem Modular ---
+            // 1. Corpo principal (parede de gesso)
+            const mainWall = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), plasterMaterial);
+            mainWall.position.y = height / 2;
+            mainWall.castShadow = true;
+            mainWall.receiveShadow = true;
+            building.add(mainWall);
+
+            // 2. Estrutura de vigas de madeira (detalhe 3D)
+            const beamSize = 0.2;
+            // Vigas Verticais
+            const vBeamGeo = new THREE.BoxGeometry(beamSize, height + beamSize, beamSize);
             for (let i = 0; i < 4; i++) {
-                const tower = new THREE.Mesh(
-                    new THREE.CylinderGeometry(towerWidth/2, towerWidth/2, towerHeight, 8),
-                    buildingMaterial
-                );
-                tower.position.y = towerHeight / 2;
-                tower.position.x = (i % 2 === 0 ? 1 : -1) * (width/2 - towerWidth/2);
-                tower.position.z = (i < 2 ? 1 : -1) * (depth/2 - towerWidth/2);
-                tower.castShadow = true;
-                buildingGroup.add(tower);
-                
-                // Telhado cônico da torre
-                const roof = new THREE.Mesh(
-                    new THREE.ConeGeometry(towerWidth/2, towerHeight * 0.3, 8),
-                    new THREE.MeshStandardMaterial({ 
-                        color: 0x1a1a2a,
-                        metalness: 0.8,
-                        roughness: 0.2
-                    })
-                );
-                roof.position.y = towerHeight + roof.geometry.parameters.height/2;
-                roof.position.x = tower.position.x;
-                roof.position.z = tower.position.z;
-                roof.castShadow = true;
-                buildingGroup.add(roof);
+                const beam = new THREE.Mesh(vBeamGeo, woodMaterial);
+                const x = (i < 2 ? -1 : 1) * width / 2;
+                const z = (i % 2 === 0 ? -1 : 1) * depth / 2;
+                beam.position.set(x, height / 2, z);
+                beam.castShadow = true;
+                building.add(beam);
             }
-            
-            // Janelas com luzes neon
-            const windowCount = Math.floor(height / 3);
-            for (let i = 0; i < windowCount; i++) {
-                const windowY = (i + 1) * (height / (windowCount + 1));
-                
-                // Janela frontal
-                const frontWindow = new THREE.Mesh(
-                    new THREE.PlaneGeometry(width * 0.6, height * 0.1),
-                    new THREE.MeshStandardMaterial({ 
-                        color: 0x00ffcc,
-                        emissive: 0x004433,
-                        transparent: true,
-                        opacity: 0.8
-                    })
-                );
-                frontWindow.position.set(0, windowY, depth/2 + 0.01);
-                buildingGroup.add(frontWindow);
-                
-                // Janela traseira
-                const backWindow = new THREE.Mesh(
-                    new THREE.PlaneGeometry(width * 0.6, height * 0.1),
-                    new THREE.MeshStandardMaterial({ 
-                        color: 0xff6b6b,
-                        emissive: 0x440022,
-                        transparent: true,
-                        opacity: 0.8
-                    })
-                );
-                backWindow.position.set(0, windowY, -depth/2 - 0.01);
-                buildingGroup.add(backWindow);
+            // Vigas Horizontais (Topo e Base)
+            const hBeamGeoX = new THREE.BoxGeometry(width + beamSize, beamSize, beamSize);
+            const hBeamGeoZ = new THREE.BoxGeometry(beamSize, beamSize, depth + beamSize);
+            for (let y of [0, height]) {
+                 for (let i = 0; i < 2; i++) {
+                    const beamX = new THREE.Mesh(hBeamGeoX, woodMaterial);
+                    beamX.position.set(0, y, (i === 0 ? -1 : 1) * depth / 2);
+                    building.add(beamX);
+                    const beamZ = new THREE.Mesh(hBeamGeoZ, woodMaterial);
+                    beamZ.position.set((i === 0 ? -1 : 1) * width / 2, y, 0);
+                    building.add(beamZ);
+                }
             }
-            
-            // Luzes de neon nas bordas
-            const neonColor = new THREE.Color().setHSL(Math.random(), 0.8, 0.6);
-            const neonLight = new THREE.PointLight(neonColor, 0.4, 20);
-            neonLight.position.set(0, height * 0.8, 0);
-            buildingGroup.add(neonLight);
-            
-            // Hologramas flutuantes
-            if (Math.random() > 0.5) {
-                const hologram = new THREE.Mesh(
-                    new THREE.PlaneGeometry(width * 0.8, height * 0.3),
-                    new THREE.MeshStandardMaterial({ 
-                        color: neonColor,
-                        transparent: true,
-                        opacity: 0.3,
-                        side: THREE.DoubleSide
-                    })
-                );
-                hologram.position.set(0, height + 2, 0);
-                hologram.rotation.x = Math.PI / 4;
-                buildingGroup.add(hologram);
-            }
-            
-            buildingGroup.position.set(x, 0, z);
-            return buildingGroup;
+
+            // 3. Telhado Íngreme
+            const roofHeight = height * (0.4 + Math.random() * 0.2);
+            const roof = new THREE.Mesh(
+                new THREE.ConeGeometry(Math.max(width, depth) * 0.8, roofHeight, 4, 1), 
+                woodMaterial
+            );
+            roof.position.y = height + (roofHeight / 2) - beamSize;
+            roof.rotation.y = Math.PI / 4;
+            roof.castShadow = true;
+            building.add(roof);
+
+
+            scene.add(building);
+            return building;
         }
         
         // Função para criar prédio residencial
@@ -799,18 +821,1578 @@
             scene.add(props);
         }
 
-        // Personagem (cápsula)
-        const playerGeometry = new THREE.CapsuleGeometry(0.5, 1, 4, 16);
-        const playerMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x00ffcc,
-            emissive: 0x001111,
-            roughness: 0.3,
-            metalness: 0.7
-        });
-        const player = new THREE.Mesh(playerGeometry, playerMaterial);
-        player.position.y = 1.5;
-        player.castShadow = true;
-        scene.add(player);
+        // === SISTEMA DE GERAÇÃO DE TEXTURAS 3D AVANÇADO ===
+        
+        // Função principal para gerar um conjunto completo de texturas PBR
+        function generate3DTextures(size, type) {
+            const textures = {};
+            const heightCanvas = generateHeightMap(size, type); // Gerar altura primeiro, pois outros mapas podem depender dela
+            textures.height = new THREE.CanvasTexture(heightCanvas);
+            textures.albedo = new THREE.CanvasTexture(generateAlbedoMap(size, type, heightCanvas));
+            textures.normal = new THREE.CanvasTexture(generateNormalMap(size, type, heightCanvas));
+            textures.roughness = new THREE.CanvasTexture(generateRoughnessMap(size, type, heightCanvas));
+            textures.metalness = new THREE.CanvasTexture(generateMetalnessMap(size, type)); // Metalness geralmente não depende da altura
+            
+            // Configurar wrapping para todas as texturas
+            for (const key in textures) {
+                textures[key].wrapS = THREE.RepeatWrapping;
+                textures[key].wrapT = THREE.RepeatWrapping;
+            }
+            return textures;
+        }
+
+        // Gera o mapa de cores (Albedo)
+        function generateAlbedoMap(size, type, heightCanvas) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const heightCtx = heightCanvas.getContext('2d', { willReadFrequently: true });
+            const heightData = heightCtx.getImageData(0, 0, size, size).data;
+
+            let baseColor, patternColor, detailColor;
+            switch(type) {
+                case 'cobblestone': baseColor = '#5a5a5a'; patternColor = '#6a6a6a'; detailColor = '#404040'; break;
+                case 'wood_planks': baseColor = '#8B4513'; patternColor = '#A0522D'; detailColor = '#5C3317'; break;
+                case 'plaster_wall': baseColor = '#F5F5DC'; patternColor = '#E0E0C8'; detailColor = '#C8C8B4'; break;
+                case 'grass_terrain': baseColor = '#2a3a2a'; patternColor = '#3a4a3a'; detailColor = '#1a2a1a'; break;
+                default: baseColor = '#808080'; patternColor = '#909090'; detailColor = '#707070';
+            }
+            
+            ctx.fillStyle = baseColor;
+            ctx.fillRect(0, 0, size, size);
+
+            // Adiciona variação de cor com base na altura
+            for (let i = 0; i < heightData.length; i += 4) {
+                const height = heightData[i] / 255; // Normaliza a altura (0-1)
+                const variation = (height - 0.5) * 0.2; // -0.1 a 0.1
+                const color = new THREE.Color(baseColor).offsetHSL(0, 0, variation);
+                
+                const x = (i / 4) % size;
+                const y = Math.floor((i / 4) / size);
+                
+                ctx.fillStyle = `#${color.getHexString()}`;
+                ctx.fillRect(x, y, 1, 1);
+            }
+
+            // Desenha padrões específicos sobre a base variada
+            if (type === 'cobblestone') generateCobblestonePattern(ctx, size, patternColor, detailColor);
+            if (type === 'wood_planks') generateWoodPlankPattern(ctx, size, patternColor, detailColor);
+            
+            return canvas;
+        }
+
+        // Gera o Normal Map para simular relevo
+        function generateNormalMap(size, type, heightCanvas) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const heightCtx = heightCanvas.getContext('2d', { willReadFrequently: true });
+            const heightData = heightCtx.getImageData(0, 0, size, size).data;
+            const normalData = ctx.createImageData(size, size);
+            
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    // Pega a altura dos pixels vizinhos para calcular a inclinação
+                    const hL = getHeight(x - 1, y, size, heightData) / 255.0; // Left
+                    const hR = getHeight(x + 1, y, size, heightData) / 255.0; // Right
+                    const hD = getHeight(x, y - 1, size, heightData) / 255.0; // Down
+                    const hU = getHeight(x, y + 1, size, heightData) / 255.0; // Up
+
+                    const n = new THREE.Vector3(hL - hR, hD - hU, 2.0).normalize();
+                    
+                    const index = (y * size + x) * 4;
+                    normalData.data[index + 0] = (n.x * 0.5 + 0.5) * 255; // R
+                    normalData.data[index + 1] = (n.y * 0.5 + 0.5) * 255; // G
+                    normalData.data[index + 2] = (n.z * 0.5 + 0.5) * 255; // B
+                    normalData.data[index + 3] = 255; // Alpha
+                }
+            }
+            ctx.putImageData(normalData, 0, 0);
+            return canvas;
+        }
+        
+        function getHeight(x, y, size, data) {
+            x = Math.max(0, Math.min(size - 1, x));
+            y = Math.max(0, Math.min(size - 1, y));
+            return data[(y * size + x) * 4];
+        }
+        
+        // Gera o Height Map (escala de cinza para deslocamento)
+        function generateHeightMap(size, type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.fillStyle = '#808080'; // Base cinza
+            ctx.fillRect(0, 0, size, size);
+
+            if (type === 'cobblestone') generateCobblestoneHeight(ctx, size);
+            if (type === 'wood_planks') generateWoodPlankHeight(ctx, size);
+            if (type === 'grass_terrain') generateGrassHeight(ctx, size);
+
+            return canvas;
+        }
+        
+        // Gera o Roughness Map
+        function generateRoughnessMap(size, type, heightCanvas) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const heightCtx = heightCanvas.getContext('2d', { willReadFrequently: true });
+            const heightData = heightCtx.getImageData(0, 0, size, size).data;
+
+            let baseRoughness, variation;
+            switch(type) {
+                case 'cobblestone': baseRoughness = 0.8; variation = 0.1; break;
+                case 'wood_planks': baseRoughness = 0.7; variation = 0.2; break;
+                case 'plaster_wall': baseRoughness = 0.9; variation = 0.05; break;
+                case 'grass_terrain': baseRoughness = 0.85; variation = 0.1; break;
+                default: baseRoughness = 0.5; variation = 0.1;
+            }
+            
+            // Varia a rugosidade com base na altura (áreas mais baixas são mais ásperas/molhadas)
+            for (let i = 0; i < heightData.length; i += 4) {
+                const height = heightData[i] / 255;
+                const rough = baseRoughness + (height - 0.5) * variation;
+                const gray = Math.floor(Math.max(0, Math.min(1, rough)) * 255);
+                const x = (i / 4) % size;
+                const y = Math.floor((i / 4) / size);
+                ctx.fillStyle = `rgb(${gray}, ${gray}, ${gray})`;
+                ctx.fillRect(x, y, 1, 1);
+            }
+            return canvas;
+        }
+
+        // Gera o Metalness Map
+        function generateMetalnessMap(size, type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const metalness = (type === 'metal_floor' || type === 'metal_details') ? 0.9 : 0.05;
+            const gray = Math.floor(metalness * 255);
+            ctx.fillStyle = `rgb(${gray}, ${gray}, ${gray})`;
+            ctx.fillRect(0, 0, size, size);
+            return canvas;
+        }
+        
+        // --- Funções de Padrão ---
+
+        function generateCobblestonePattern(ctx, size, patternColor, detailColor) {
+            const stoneSize = size / 8;
+            for (let y = 0; y < size; y += stoneSize) {
+                for (let x = 0; x < size; x += stoneSize) {
+                    ctx.fillStyle = Math.random() > 0.5 ? patternColor : detailColor;
+                    const offsetX = (Math.random() - 0.5) * stoneSize * 0.2;
+                    const offsetY = (Math.random() - 0.5) * stoneSize * 0.2;
+                    ctx.beginPath();
+                    ctx.arc(x + stoneSize / 2 + offsetX, y + stoneSize / 2 + offsetY, stoneSize / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        function generateWoodPlankPattern(ctx, size, patternColor, detailColor) {
+            const plankWidth = size / 6;
+            for (let x = 0; x < size; x += plankWidth) {
+                ctx.fillStyle = patternColor;
+                ctx.fillRect(x, 0, plankWidth, size);
+                ctx.strokeStyle = detailColor;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, 0, plankWidth, size);
+                // Wood grain
+                for (let i = 0; i < 20; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + Math.random() * plankWidth, 0);
+                    ctx.lineTo(x + Math.random() * plankWidth, size);
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        function generateCobblestoneHeight(ctx, size) {
+            const stoneSize = size / 8;
+            for (let y = 0; y < size; y += stoneSize) {
+                for (let x = 0; x < size; x += stoneSize) {
+                    const height = Math.floor(Math.random() * 50 + 200); // Variação de altura para as pedras
+                    ctx.fillStyle = `rgb(${height}, ${height}, ${height})`;
+                    ctx.beginPath();
+                    ctx.arc(x + stoneSize / 2, y + stoneSize / 2, stoneSize / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        function generateWoodPlankHeight(ctx, size) {
+            const plankWidth = size / 6;
+            for (let x = 0; x < size; x += plankWidth) {
+                const height = Math.floor(Math.random() * 20 + 220);
+                ctx.fillStyle = `rgb(${height}, ${height}, ${height})`;
+                ctx.fillRect(x, 0, plankWidth, size);
+                // Gaps are lower
+                ctx.fillStyle = 'rgb(50, 50, 50)';
+                ctx.fillRect(x - 1, 0, 2, size);
+            }
+        }
+        
+        function generateGrassHeight(ctx, size) {
+            for (let i = 0; i < 500; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 40;
+                const height = Math.floor(Math.random() * 100 + 128);
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                gradient.addColorStop(0, `rgb(${height}, ${height}, ${height})`);
+                gradient.addColorStop(1, 'rgb(128, 128, 128)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // --- CHAMADA PRINCIPAL PARA GERAR A CIDADE ---
+        createGothicTechCity();
+
+        let npcs = []; // Array mantido para evitar erros de referência
+
+        // === GERAÇÃO PROCEDURAL DO VILAREJO GÓTICO HI-TECH ===
+
+        function createGothicTechVillage() {
+            // Esta função irá orquestrar a criação do vilarejo.
+            // O conteúdo será adicionado nos próximos passos.
+        }
+
+        // --- CHAMADA PRINCIPAL ---
+        createGothicTechVillage();
+
+        // === SISTEMA DE GERAÇÃO DE TEXTURAS 3D AVANÇADO ===
+        
+        // Função principal para gerar um conjunto completo de texturas PBR
+        function generate3DTextures(size, type) {
+            const textures = {};
+            const heightCanvas = generateHeightMap(size, type); // Gerar altura primeiro, pois outros mapas podem depender dela
+            textures.height = new THREE.CanvasTexture(heightCanvas);
+            textures.albedo = new THREE.CanvasTexture(generateAlbedoMap(size, type, heightCanvas));
+            textures.normal = new THREE.CanvasTexture(generateNormalMap(size, type, heightCanvas));
+            textures.roughness = new THREE.CanvasTexture(generateRoughnessMap(size, type, heightCanvas));
+            textures.metalness = new THREE.CanvasTexture(generateMetalnessMap(size, type)); // Metalness geralmente não depende da altura
+            
+            // Configurar wrapping para todas as texturas
+            for (const key in textures) {
+                textures[key].wrapS = THREE.RepeatWrapping;
+                textures[key].wrapT = THREE.RepeatWrapping;
+            }
+            return textures;
+        }
+
+        // Gera o mapa de cores (Albedo)
+        function generateAlbedoMap(size, type, heightCanvas) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const heightCtx = heightCanvas.getContext('2d', { willReadFrequently: true });
+            const heightData = heightCtx.getImageData(0, 0, size, size).data;
+
+            let baseColor, patternColor, detailColor;
+            switch(type) {
+                case 'cobblestone': baseColor = '#5a5a5a'; patternColor = '#6a6a6a'; detailColor = '#404040'; break;
+                case 'wood_planks': baseColor = '#8B4513'; patternColor = '#A0522D'; detailColor = '#5C3317'; break;
+                case 'plaster_wall': baseColor = '#F5F5DC'; patternColor = '#E0E0C8'; detailColor = '#C8C8B4'; break;
+                case 'grass_terrain': baseColor = '#2a3a2a'; patternColor = '#3a4a3a'; detailColor = '#1a2a1a'; break;
+                default: baseColor = '#808080'; patternColor = '#909090'; detailColor = '#707070';
+            }
+            
+            ctx.fillStyle = baseColor;
+            ctx.fillRect(0, 0, size, size);
+
+            // Adiciona variação de cor com base na altura
+            for (let i = 0; i < heightData.length; i += 4) {
+                const height = heightData[i] / 255; // Normaliza a altura (0-1)
+                const variation = (height - 0.5) * 0.2; // -0.1 a 0.1
+                const color = new THREE.Color(baseColor).offsetHSL(0, 0, variation);
+                
+                const x = (i / 4) % size;
+                const y = Math.floor((i / 4) / size);
+                
+                ctx.fillStyle = `#${color.getHexString()}`;
+                ctx.fillRect(x, y, 1, 1);
+            }
+
+            // Desenha padrões específicos sobre a base variada
+            if (type === 'cobblestone') generateCobblestonePattern(ctx, size, patternColor, detailColor);
+            if (type === 'wood_planks') generateWoodPlankPattern(ctx, size, patternColor, detailColor);
+            
+            return canvas;
+        }
+
+        // Gera o Normal Map para simular relevo
+        function generateNormalMap(size, type, heightCanvas) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const heightCtx = heightCanvas.getContext('2d', { willReadFrequently: true });
+            const heightData = heightCtx.getImageData(0, 0, size, size).data;
+            const normalData = ctx.createImageData(size, size);
+            
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    // Pega a altura dos pixels vizinhos para calcular a inclinação
+                    const hL = getHeight(x - 1, y, size, heightData) / 255.0; // Left
+                    const hR = getHeight(x + 1, y, size, heightData) / 255.0; // Right
+                    const hD = getHeight(x, y - 1, size, heightData) / 255.0; // Down
+                    const hU = getHeight(x, y + 1, size, heightData) / 255.0; // Up
+
+                    const n = new THREE.Vector3(hL - hR, hD - hU, 2.0).normalize();
+                    
+                    const index = (y * size + x) * 4;
+                    normalData.data[index + 0] = (n.x * 0.5 + 0.5) * 255; // R
+                    normalData.data[index + 1] = (n.y * 0.5 + 0.5) * 255; // G
+                    normalData.data[index + 2] = (n.z * 0.5 + 0.5) * 255; // B
+                    normalData.data[index + 3] = 255; // Alpha
+                }
+            }
+            ctx.putImageData(normalData, 0, 0);
+            return canvas;
+        }
+        
+        function getHeight(x, y, size, data) {
+            x = Math.max(0, Math.min(size - 1, x));
+            y = Math.max(0, Math.min(size - 1, y));
+            return data[(y * size + x) * 4];
+        }
+        
+        // Gera o Height Map (escala de cinza para deslocamento)
+        function generateHeightMap(size, type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.fillStyle = '#808080'; // Base cinza
+            ctx.fillRect(0, 0, size, size);
+
+            if (type === 'cobblestone') generateCobblestoneHeight(ctx, size);
+            if (type === 'wood_planks') generateWoodPlankHeight(ctx, size);
+            if (type === 'grass_terrain') generateGrassHeight(ctx, size);
+
+            return canvas;
+        }
+        
+        // Gera o Roughness Map
+        function generateRoughnessMap(size, type, heightCanvas) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const heightCtx = heightCanvas.getContext('2d', { willReadFrequently: true });
+            const heightData = heightCtx.getImageData(0, 0, size, size).data;
+
+            let baseRoughness, variation;
+            switch(type) {
+                case 'cobblestone': baseRoughness = 0.8; variation = 0.1; break;
+                case 'wood_planks': baseRoughness = 0.7; variation = 0.2; break;
+                case 'plaster_wall': baseRoughness = 0.9; variation = 0.05; break;
+                case 'grass_terrain': baseRoughness = 0.85; variation = 0.1; break;
+                default: baseRoughness = 0.5; variation = 0.1;
+            }
+            
+            // Varia a rugosidade com base na altura (áreas mais baixas são mais ásperas/molhadas)
+            for (let i = 0; i < heightData.length; i += 4) {
+                const height = heightData[i] / 255;
+                const rough = baseRoughness + (height - 0.5) * variation;
+                const gray = Math.floor(Math.max(0, Math.min(1, rough)) * 255);
+                const x = (i / 4) % size;
+                const y = Math.floor((i / 4) / size);
+                ctx.fillStyle = `rgb(${gray}, ${gray}, ${gray})`;
+                ctx.fillRect(x, y, 1, 1);
+            }
+            return canvas;
+        }
+
+        // Gera o Metalness Map
+        function generateMetalnessMap(size, type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const metalness = (type === 'metal_floor' || type === 'metal_details') ? 0.9 : 0.05;
+            const gray = Math.floor(metalness * 255);
+            ctx.fillStyle = `rgb(${gray}, ${gray}, ${gray})`;
+            ctx.fillRect(0, 0, size, size);
+            return canvas;
+        }
+        
+        // --- Funções de Padrão ---
+
+        function generateCobblestonePattern(ctx, size, patternColor, detailColor) {
+            const stoneSize = size / 8;
+            for (let y = 0; y < size; y += stoneSize) {
+                for (let x = 0; x < size; x += stoneSize) {
+                    ctx.fillStyle = Math.random() > 0.5 ? patternColor : detailColor;
+                    const offsetX = (Math.random() - 0.5) * stoneSize * 0.2;
+                    const offsetY = (Math.random() - 0.5) * stoneSize * 0.2;
+                    ctx.beginPath();
+                    ctx.arc(x + stoneSize / 2 + offsetX, y + stoneSize / 2 + offsetY, stoneSize / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        function generateWoodPlankPattern(ctx, size, patternColor, detailColor) {
+            const plankWidth = size / 6;
+            for (let x = 0; x < size; x += plankWidth) {
+                ctx.fillStyle = patternColor;
+                ctx.fillRect(x, 0, plankWidth, size);
+                ctx.strokeStyle = detailColor;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, 0, plankWidth, size);
+                // Wood grain
+                for (let i = 0; i < 20; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + Math.random() * plankWidth, 0);
+                    ctx.lineTo(x + Math.random() * plankWidth, size);
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        function generateCobblestoneHeight(ctx, size) {
+            const stoneSize = size / 8;
+            for (let y = 0; y < size; y += stoneSize) {
+                for (let x = 0; x < size; x += stoneSize) {
+                    const height = Math.floor(Math.random() * 50 + 200); // Variação de altura para as pedras
+                    ctx.fillStyle = `rgb(${height}, ${height}, ${height})`;
+                    ctx.beginPath();
+                    ctx.arc(x + stoneSize / 2, y + stoneSize / 2, stoneSize / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        function generateWoodPlankHeight(ctx, size) {
+            const plankWidth = size / 6;
+            for (let x = 0; x < size; x += plankWidth) {
+                const height = Math.floor(Math.random() * 20 + 220);
+                ctx.fillStyle = `rgb(${height}, ${height}, ${height})`;
+                ctx.fillRect(x, 0, plankWidth, size);
+                // Gaps are lower
+                ctx.fillStyle = 'rgb(50, 50, 50)';
+                ctx.fillRect(x - 1, 0, 2, size);
+            }
+        }
+        
+        function generateGrassHeight(ctx, size) {
+            for (let i = 0; i < 500; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const radius = Math.random() * 40;
+                const height = Math.floor(Math.random() * 100 + 128);
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                gradient.addColorStop(0, `rgb(${height}, ${height}, ${height})`);
+                gradient.addColorStop(1, 'rgb(128, 128, 128)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // === GERAÇÃO PROCEDURAL DO CENÁRIO MEDIEVAL ===
+
+        // Função principal que orquestra a criação da vila
+        function createMedievalVillage() {
+            createMainStreet();
+
+            // Gerar prédios ao longo da rua e arredores
+            for (let i = 0; i < 30; i++) { // Aumentado para 30 prédios
+                const side = (Math.random() > 0.5) ? 1 : -1;
+                const zPos = (Math.random() - 0.5) * 90;
+                // Espalhar mais os prédios
+                const xPos = (8 + Math.random() * 25) * side;
+                createMedievalBuilding({ x: xPos, y: 0, z: zPos });
+            }
+
+            // Adicionar um poço perto do centro da vila
+            createMedievalWell({ x: 2, y: 0, z: 15 });
+
+            // Adicionar algumas linhas de cerca
+            createFenceLine({ x: -20, z: -40 }, { x: -20, z: 40 });
+            createFenceLine({ x: 20, z: -40 }, { x: 20, z: 40 });
+            createFenceLine({ x: -20, z: -40 }, { x: 20, z: -40 });
+            
+            // Gerar mais NPCs
+            for (let i = 0; i < 15; i++) { // Aumentado para 15 NPCs
+                createNPC();
+            }
+        }
+
+        // Cria a rua principal de paralelepípedos
+        function createMainStreet() {
+            const streetTextures = generate3DTextures(512, 'cobblestone');
+            const streetGeometry = new THREE.PlaneGeometry(10, 100);
+            const streetMaterial = new THREE.MeshStandardMaterial({
+                map: streetTextures.albedo,
+                normalMap: streetTextures.normal,
+                roughnessMap: streetTextures.roughness,
+                displacementMap: streetTextures.height,
+                displacementScale: 0.1
+            });
+            streetTextures.albedo.repeat.set(2, 20);
+            streetTextures.normal.repeat.set(2, 20);
+            streetTextures.roughness.repeat.set(2, 20);
+            streetTextures.height.repeat.set(2, 20);
+
+            const street = new THREE.Mesh(streetGeometry, streetMaterial);
+            street.rotation.x = -Math.PI / 2;
+            street.position.y = 0.05;
+            street.receiveShadow = true;
+            scene.add(street);
+        }
+
+        // Cria um prédio medieval procedural reutilizável
+        function createMedievalBuilding(options) {
+            const building = new THREE.Group();
+            building.position.set(options.x, options.y, options.z);
+
+            const width = 6 + Math.random() * 4;
+            const depth = 6 + Math.random() * 4;
+            const height = 8 + Math.random() * 6;
+
+            // Texturas
+            const wallTextures = generate3DTextures(256, 'plaster_wall');
+            const woodTextures = generate3DTextures(256, 'wood_planks');
+
+            // Paredes
+            const wallMaterial = new THREE.MeshStandardMaterial({ map: wallTextures.albedo, normalMap: wallTextures.normal, roughnessMap: wallTextures.roughness });
+            const wallMesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), wallMaterial);
+            wallMesh.position.y = height / 2;
+            wallMesh.castShadow = true;
+            wallMesh.receiveShadow = true;
+            building.add(wallMesh);
+            
+            // Estrutura de madeira
+            const woodMaterial = new THREE.MeshStandardMaterial({ map: woodTextures.albedo, normalMap: woodTextures.normal, roughnessMap: woodTextures.roughness });
+            // ... (código para adicionar vigas de madeira nos cantos e bordas)
+
+            // Telhado
+            const roofHeight = height / 3;
+            const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(width, depth) * 0.7, roofHeight, 4), woodMaterial);
+            roof.position.y = height + roofHeight / 2;
+            roof.rotation.y = Math.PI / 4;
+            roof.castShadow = true;
+            building.add(roof);
+
+            scene.add(building);
+            return building;
+        }
+
+        // Cria um poço medieval
+        function createMedievalWell(position) {
+            const well = new THREE.Group();
+            well.position.set(position.x, position.y, position.z);
+
+            const stoneTextures = generate3DTextures(128, 'cobblestone');
+            const woodTextures = generate3DTextures(128, 'wood_planks');
+
+            // Base do poço
+            const baseGeo = new THREE.CylinderGeometry(1.5, 1.5, 1, 12);
+            const baseMat = new THREE.MeshStandardMaterial({
+                map: stoneTextures.albedo,
+                normalMap: stoneTextures.normal,
+                displacementMap: stoneTextures.height,
+                displacementScale: 0.1
+            });
+            const base = new THREE.Mesh(baseGeo, baseMat);
+            base.position.y = 0.5;
+            base.receiveShadow = true;
+            base.castShadow = true;
+            well.add(base);
+
+            // Estrutura de madeira
+            const woodMaterial = new THREE.MeshStandardMaterial({
+                map: woodTextures.albedo,
+                normalMap: woodTextures.normal
+            });
+            const postGeo = new THREE.BoxGeometry(0.2, 2.5, 0.2);
+            const post1 = new THREE.Mesh(postGeo, woodMaterial);
+            post1.position.set(-1.2, 1.75, 0); // Ajustado para ficar sobre a base
+            post1.castShadow = true;
+            well.add(post1);
+
+            const post2 = new THREE.Mesh(postGeo, woodMaterial);
+            post2.position.set(1.2, 1.75, 0); // Ajustado para ficar sobre a base
+            post2.castShadow = true;
+            well.add(post2);
+            
+            const crossbeam = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 0.2), woodMaterial);
+            crossbeam.position.set(0, 3, 0);
+            crossbeam.castShadow = true;
+            well.add(crossbeam);
+
+            // Telhado
+            const roofGeo = new THREE.CylinderGeometry(0, 2, 1, 4, 1);
+            const roof = new THREE.Mesh(roofGeo, woodMaterial);
+            roof.position.y = 3.5; // Ajustado para ficar sobre a viga
+            roof.rotation.y = Math.PI / 4;
+            roof.castShadow = true;
+            well.add(roof);
+
+            scene.add(well);
+        }
+
+        // Cria uma linha de cerca procedural
+        function createFenceLine(start, end) {
+            const fence = new THREE.Group();
+            const woodTextures = generate3DTextures(64, 'wood_planks');
+            const woodMaterial = new THREE.MeshStandardMaterial({
+                map: woodTextures.albedo,
+                normalMap: woodTextures.normal
+            });
+            
+            const startVec = new THREE.Vector3(start.x, 0, start.z);
+            const endVec = new THREE.Vector3(end.x, 0, end.z);
+            
+            const length = startVec.distanceTo(endVec);
+            const direction = new THREE.Vector3().subVectors(endVec, startVec).normalize();
+            const count = Math.floor(length / 2);
+
+            for (let i = 0; i <= count; i++) {
+                const post = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.1, 0.1, 1.2),
+                    woodMaterial
+                );
+                const pos = new THREE.Vector3().copy(startVec).add(direction.clone().multiplyScalar(i * 2));
+                post.position.set(pos.x, 0.6, pos.z);
+                post.castShadow = true;
+                fence.add(post);
+            }
+            scene.add(fence);
+        }
+
+        // Cria um NPC simples
+        function createNPC() {
+            const npc = new THREE.Mesh(
+                new THREE.CapsuleGeometry(0.5, 1.0),
+                new THREE.MeshStandardMaterial({ color: `hsl(${Math.random() * 360}, 50%, 50%)` })
+            );
+            npc.position.set(
+                (Math.random() - 0.5) * 30, // Área de patrulha maior
+                1,
+                (Math.random() - 0.5) * 90
+            );
+            npc.castShadow = true;
+            scene.add(npc);
+            // Lógica de patrulha mais aleatória
+            npc.userData.patrolTarget = new THREE.Vector3(
+                (Math.random() - 0.5) * 30,
+                1,
+                (Math.random() - 0.5) * 90
+            );
+            npc.userData.patrolStart = new THREE.Vector3().copy(npc.position);
+            npcs.push(npc);
+        }
+        
+        // Criar a vila medieval
+        createMedievalVillage();
+
+        // Classe de Personagem Humanoide
+        class HumanoidCharacter {
+            constructor(scene, position = { x: 0, y: 0, z: 0 }) {
+                this.scene = scene;
+                this._position = position;
+                this.group = new THREE.Group();
+                this.bones = {};
+                this.mixer = null;
+                this.actions = {};
+                this.currentAnimation = 'idle';
+                this.clock = new THREE.Clock();
+                this.fbxLoader = new FBXLoader();
+                this.animationsLoaded = false;
+                
+                this.createCharacter();
+                this.setupRig();
+                this.setupMaterials();
+                this.loadAnimations();
+            }
+            
+            createCharacter() {
+                // Cabeça com textura de pele mais realista
+                const headGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+                const headMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0xffdbac, // Cor de pele
+                    roughness: 0.7,
+                    metalness: 0.05,
+                    emissive: 0x001100, // Leve brilho para efeito tecnológico
+                    emissiveIntensity: 0.1
+                });
+                this.head = new THREE.Mesh(headGeometry, headMaterial);
+                this.head.position.set(0, 1.7, 0);
+                this.head.castShadow = true;
+                this.group.add(this.head);
+                
+                // Torso com material gótico hi-tech aprimorado
+                const torsoGeometry = new THREE.CylinderGeometry(0.4, 0.3, 0.8, 12);
+                const torsoMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x1a1a2a, // Cor mais escura
+                    roughness: 0.3,
+                    metalness: 0.8,
+                    emissive: 0x001122, // Brilho azul tecnológico
+                    emissiveIntensity: 0.3
+                });
+                this.torso = new THREE.Mesh(torsoGeometry, torsoMaterial);
+                this.torso.position.set(0, 1.2, 0);
+                this.torso.castShadow = true;
+                this.group.add(this.torso);
+                
+                // Braços
+                this.createArm(-0.5, 1.4, 0, 'left');  // Braço esquerdo
+                this.createArm(0.5, 1.4, 0, 'right');  // Braço direito
+                
+                // Pernas
+                this.createLeg(-0.2, 0.6, 0, 'left');   // Perna esquerda
+                this.createLeg(0.2, 0.6, 0, 'right');   // Perna direita
+                
+                // Pés
+                this.createFoot(-0.2, 0.1, 0.1, 'left');  // Pé esquerdo
+                this.createFoot(0.2, 0.1, 0.1, 'right');  // Pé direito
+                
+                // Detalhes gótico hi-tech
+                this.addTechDetails();
+                
+                // Posicionar personagem
+                this.group.position.set(this._position.x, this._position.y, this._position.z);
+                this.scene.add(this.group);
+            }
+            
+            createArm(x, y, z, side) {
+                // Ombro com material aprimorado
+                const shoulderGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+                const shoulderMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0xffdbac,
+                    roughness: 0.6,
+                    metalness: 0.2,
+                    emissive: 0x001100,
+                    emissiveIntensity: 0.05
+                });
+                const shoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
+                shoulder.position.set(x, y, z);
+                shoulder.castShadow = true;
+                this.group.add(shoulder);
+                
+                // Braço superior com textura de pele mais realista
+                const upperArmGeometry = new THREE.CylinderGeometry(0.08, 0.1, 0.4, 8);
+                const upperArmMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0xffdbac,
+                    roughness: 0.6,
+                    metalness: 0.1,
+                    emissive: 0x001100,
+                    emissiveIntensity: 0.05
+                });
+                const upperArm = new THREE.Mesh(upperArmGeometry, upperArmMaterial);
+                upperArm.position.set(x, y - 0.2, z);
+                upperArm.castShadow = true;
+                this.group.add(upperArm);
+                
+                // Cotovelo
+                const elbowGeometry = new THREE.SphereGeometry(0.12, 8, 8);
+                const elbowMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0xffdbac,
+                    roughness: 0.8,
+                    metalness: 0.1
+                });
+                const elbow = new THREE.Mesh(elbowGeometry, elbowMaterial);
+                elbow.position.set(x, y - 0.4, z);
+                elbow.castShadow = true;
+                this.group.add(elbow);
+                
+                // Antebraço
+                const forearmGeometry = new THREE.CylinderGeometry(0.07, 0.08, 0.35, 8);
+                const forearmMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0xffdbac,
+                    roughness: 0.8,
+                    metalness: 0.1
+                });
+                const forearm = new THREE.Mesh(forearmGeometry, forearmMaterial);
+                forearm.position.set(x, y - 0.6, z);
+                forearm.castShadow = true;
+                this.group.add(forearm);
+                
+                // Mão
+                const handGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+                const handMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0xffdbac,
+                    roughness: 0.8,
+                    metalness: 0.1
+                });
+                const hand = new THREE.Mesh(handGeometry, handMaterial);
+                hand.position.set(x, y - 0.8, z);
+                hand.castShadow = true;
+                this.group.add(hand);
+                
+                // Armadura gótica no braço com detalhes aprimorados
+                const armorGeometry = new THREE.CylinderGeometry(0.12, 0.14, 0.3, 8);
+                const armorMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x0a0a1a, // Mais escuro
+                    roughness: 0.2,
+                    metalness: 0.9,
+                    emissive: 0x002244, // Brilho azul mais intenso
+                    emissiveIntensity: 0.4
+                });
+                const armor = new THREE.Mesh(armorGeometry, armorMaterial);
+                armor.position.set(x, y - 0.2, z);
+                this.group.add(armor);
+                
+                // Detalhes da armadura - placas metálicas
+                const armorDetailGeometry = new THREE.CylinderGeometry(0.13, 0.15, 0.05, 8);
+                const armorDetailMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x00ffcc, // Ciano brilhante
+                    roughness: 0.1,
+                    metalness: 1.0,
+                    emissive: 0x004433,
+                    emissiveIntensity: 0.6
+                });
+                const armorDetail = new THREE.Mesh(armorDetailGeometry, armorDetailMaterial);
+                armorDetail.position.set(x, y - 0.15, z);
+                this.group.add(armorDetail);
+                
+                // Salvar referências para animação
+                this.bones[`${side}Shoulder`] = shoulder;
+                this.bones[`${side}UpperArm`] = upperArm;
+                this.bones[`${side}Elbow`] = elbow;
+                this.bones[`${side}Forearm`] = forearm;
+                this.bones[`${side}Hand`] = hand;
+            }
+            
+            createLeg(x, y, z, side) {
+                // Quadril
+                const hipGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+                const hipMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x2a2a3a,
+                    roughness: 0.6,
+                    metalness: 0.4
+                });
+                const hip = new THREE.Mesh(hipGeometry, hipMaterial);
+                hip.position.set(x, y, z);
+                hip.castShadow = true;
+                this.group.add(hip);
+                
+                // Coxa
+                const thighGeometry = new THREE.CylinderGeometry(0.12, 0.15, 0.5, 8);
+                const thighMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x2a2a3a,
+                    roughness: 0.6,
+                    metalness: 0.4
+                });
+                const thigh = new THREE.Mesh(thighGeometry, thighMaterial);
+                thigh.position.set(x, y - 0.25, z);
+                thigh.castShadow = true;
+                this.group.add(thigh);
+                
+                // Joelho
+                const kneeGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+                const kneeMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x2a2a3a,
+                    roughness: 0.6,
+                    metalness: 0.4
+                });
+                const knee = new THREE.Mesh(kneeGeometry, kneeMaterial);
+                knee.position.set(x, y - 0.5, z);
+                knee.castShadow = true;
+                this.group.add(knee);
+                
+                // Canela
+                const shinGeometry = new THREE.CylinderGeometry(0.1, 0.12, 0.4, 8);
+                const shinMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x2a2a3a,
+                    roughness: 0.6,
+                    metalness: 0.4
+                });
+                const shin = new THREE.Mesh(shinGeometry, shinMaterial);
+                shin.position.set(x, y - 0.7, z);
+                shin.castShadow = true;
+                this.group.add(shin);
+                
+                // Salvar referências para animação
+                this.bones[`${side}Hip`] = hip;
+                this.bones[`${side}Thigh`] = thigh;
+                this.bones[`${side}Knee`] = knee;
+                this.bones[`${side}Shin`] = shin;
+            }
+            
+            createFoot(x, y, z, side) {
+                const footGeometry = new THREE.BoxGeometry(0.2, 0.1, 0.4);
+                const footMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x1a1a2a,
+                    roughness: 0.4,
+                    metalness: 0.6
+                });
+                const foot = new THREE.Mesh(footGeometry, footMaterial);
+                foot.position.set(x, y, z);
+                foot.castShadow = true;
+                this.group.add(foot);
+                
+                this.bones[`${side}Foot`] = foot;
+            }
+            
+            addTechDetails() {
+                // Olhos brilhantes com efeito de scanning
+                const eyeGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+                const eyeMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x00ffcc,
+                    emissive: 0x004433,
+                    emissiveIntensity: 0.8
+                });
+                
+                const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+                leftEye.position.set(-0.1, 1.75, 0.25);
+                this.group.add(leftEye);
+                
+                const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+                rightEye.position.set(0.1, 1.75, 0.25);
+                this.group.add(rightEye);
+                
+                // Peito com painel tecnológico avançado
+                const chestGeometry = new THREE.BoxGeometry(0.3, 0.4, 0.1);
+                const chestMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x00ffcc,
+                    emissive: 0x002211,
+                    emissiveIntensity: 0.6,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const chest = new THREE.Mesh(chestGeometry, chestMaterial);
+                chest.position.set(0, 1.3, 0.35);
+                this.group.add(chest);
+                
+                // Linhas de energia no peito
+                const energyLineGeometry = new THREE.BoxGeometry(0.25, 0.02, 0.01);
+                const energyLineMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x00ffcc,
+                    emissive: 0x00ffcc,
+                    emissiveIntensity: 1.0
+                });
+                for (let i = 0; i < 3; i++) {
+                    const energyLine = new THREE.Mesh(energyLineGeometry, energyLineMaterial);
+                    energyLine.position.set(0, 1.25 + i * 0.1, 0.4);
+                    this.group.add(energyLine);
+                }
+                
+                // Cinturão tecnológico com detalhes
+                const beltGeometry = new THREE.CylinderGeometry(0.45, 0.45, 0.05, 12);
+                const beltMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x0a0a1a,
+                    roughness: 0.2,
+                    metalness: 0.9,
+                    emissive: 0x001122,
+                    emissiveIntensity: 0.3
+                });
+                const belt = new THREE.Mesh(beltGeometry, beltMaterial);
+                belt.position.set(0, 0.9, 0);
+                this.group.add(belt);
+                
+                // Fivela do cinturão com display
+                const buckleGeometry = new THREE.BoxGeometry(0.15, 0.08, 0.02);
+                const buckleMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x00ffcc,
+                    emissive: 0x004433,
+                    emissiveIntensity: 0.8
+                });
+                const buckle = new THREE.Mesh(buckleGeometry, buckleMaterial);
+                buckle.position.set(0, 0.9, 0.45);
+                this.group.add(buckle);
+                
+                // Antenas/implantes na cabeça
+                const antennaGeometry = new THREE.CylinderGeometry(0.01, 0.01, 0.2, 6);
+                const antennaMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x00ffcc,
+                    emissive: 0x004433,
+                    emissiveIntensity: 0.6
+                });
+                
+                const leftAntenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
+                leftAntenna.position.set(-0.15, 1.9, 0.1);
+                leftAntenna.rotation.z = Math.PI / 6;
+                this.group.add(leftAntenna);
+                
+                const rightAntenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
+                rightAntenna.position.set(0.15, 1.9, 0.1);
+                rightAntenna.rotation.z = -Math.PI / 6;
+                this.group.add(rightAntenna);
+            }
+            
+            setupRig() {
+                // Configurar mixer para animações
+                this.mixer = new THREE.AnimationMixer(this.group);
+                
+                // Configurar bones para animação
+                this.setupBoneHierarchy();
+            }
+            
+            setupBoneHierarchy() {
+                // Criar hierarquia de bones para animação
+                this.bones.root = this.torso;
+                this.bones.neck = this.head;
+            }
+            
+            setupMaterials() {
+                // Aplicar sombras a todos os elementos
+                this.group.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+            }
+            
+            // Animações básicas programáticas
+            animateIdle() {
+                const time = this.clock.getElapsedTime();
+                this.torso.scale.y = 1 + Math.sin(time * 2) * 0.02;
+            }
+            
+            animateRun() {
+                const time = this.clock.getElapsedTime();
+                
+                // Movimento dos braços
+                if (this.bones.leftUpperArm) {
+                    this.bones.leftUpperArm.rotation.x = Math.sin(time * 8) * 0.5;
+                }
+                if (this.bones.rightUpperArm) {
+                    this.bones.rightUpperArm.rotation.x = Math.sin(time * 8 + Math.PI) * 0.5;
+                }
+                
+                // Movimento das pernas
+                if (this.bones.leftThigh) {
+                    this.bones.leftThigh.rotation.x = Math.sin(time * 8) * 0.3;
+                }
+                if (this.bones.rightThigh) {
+                    this.bones.rightThigh.rotation.x = Math.sin(time * 8 + Math.PI) * 0.3;
+                }
+                
+                // Movimento vertical do corpo
+                this.group.position.y = 1.5 + Math.sin(time * 16) * 0.1;
+            }
+            
+            animateAttack() {
+                const time = this.clock.getElapsedTime();
+                
+                if (this.bones.rightUpperArm) {
+                    this.bones.rightUpperArm.rotation.x = Math.sin(time * 20) * 0.8;
+                }
+                if (this.bones.rightForearm) {
+                    this.bones.rightForearm.rotation.x = Math.sin(time * 20) * 0.4;
+                }
+            }
+            
+            loadAnimations() {
+                // Usar apenas animações programáticas (FBX desabilitado)
+                console.log('Usando animações programáticas (FBX desabilitado)');
+                
+                // Configurar mixer
+                if (!this.mixer) {
+                    this.mixer = new THREE.AnimationMixer(this.group);
+                }
+                
+                // Criar animações programáticas simples
+                this.actions.idle = this.createSimpleAction('idle');
+                this.actions.run = this.createSimpleAction('run');
+                this.actions.attack = this.createSimpleAction('attack');
+                this.actions.hit = this.createSimpleAction('hit');
+                this.actions.death = this.createSimpleAction('death');
+                
+                this.animationsLoaded = true;
+                console.log('Todas as animações programáticas foram criadas!');
+                this.playAnimation('idle');
+            }
+            
+            createSimpleAction(animName) {
+                // Criar uma ação simples que não faz nada (placeholder)
+                const emptyClip = new THREE.AnimationClip(animName, 1, []);
+                const action = this.mixer.clipAction(emptyClip);
+                action.setLoop(THREE.LoopRepeat);
+                action.clampWhenFinished = true;
+                return action;
+            }
+            
+            playAnimation(animName) {
+                if (!this.animationsLoaded) {
+                    console.log('Animações ainda não carregadas, usando animações programáticas');
+                    return;
+                }
+                
+                if (this.currentAnimation === animName) return;
+                
+                // Parar animação atual
+                if (this.actions[this.currentAnimation]) {
+                    this.actions[this.currentAnimation].fadeOut(0.5);
+                }
+                
+                // Iniciar nova animação
+                if (this.actions[animName]) {
+                    this.actions[animName].reset().fadeIn(0.5).play();
+                    this.currentAnimation = animName;
+                    console.log(`Tocando animação: ${animName}`);
+                } else {
+                    console.warn(`Animação ${animName} não encontrada`);
+                }
+            }
+            
+            update() {
+                if (this.mixer) {
+                    this.mixer.update(this.clock.getDelta());
+                }
+            }
+            
+            // Getters para compatibilidade
+            get position() {
+                return this.group.position;
+            }
+            
+            get rotation() {
+                return this.group.rotation;
+            }
+            
+            get scale() {
+                return this.group.scale;
+            }
+        }
+
+        // Criar personagem humanoide
+        const player = new HumanoidCharacter(scene, { x: 0, y: 0, z: 0 });
+
+        // === SISTEMA DO EDITOR DE MAPAS ===
+        
+        // Inicializar loaders para carregar assets
+        const gltfLoader = new GLTFLoader();
+        const fbxLoader = new FBXLoader();
+        
+        // Lista de assets disponíveis (FBX + GLB) - Limpa para o tema medieval
+        const fbxAssets = [];
+        const glbAssets = [];
+        const assetList = [];
+        
+        // Cores dos pincéis de terreno
+        const brushColors = {
+            grass: 0x2a3a2a,
+            dirt: 0x8B4513,
+            stone: 0x696969,
+            metal: 0x708090
+        };
+        
+        // Função para criar modelos programáticos
+        function createProgrammaticAsset(assetName) {
+            let geometry, material, mesh;
+            
+            switch(assetName) {
+                case 'parede_pedra_01':
+                    geometry = new THREE.BoxGeometry(2, 4, 0.3);
+                    material = new THREE.MeshStandardMaterial({ 
+                        color: 0x8B7355,
+                        roughness: 0.8,
+                        metalness: 0.1
+                    });
+                    mesh = new THREE.Mesh(geometry, material);
+                    break;
+                    
+                case 'porta_metalica':
+                    geometry = new THREE.BoxGeometry(1, 2.5, 0.1);
+                    material = new THREE.MeshStandardMaterial({ 
+                        color: 0x2a2a3a,
+                        roughness: 0.3,
+                        metalness: 0.8,
+                        emissive: 0x001122
+                    });
+                    mesh = new THREE.Mesh(geometry, material);
+                    break;
+                    
+                case 'janela_simples':
+                    geometry = new THREE.BoxGeometry(1.5, 1.5, 0.1);
+                    material = new THREE.MeshStandardMaterial({ 
+                        color: 0x87CEEB,
+                        roughness: 0.1,
+                        metalness: 0.1,
+                        transparent: true,
+                        opacity: 0.7
+                    });
+                    mesh = new THREE.Mesh(geometry, material);
+                    break;
+                    
+                case 'mesa_metalica':
+                    // Mesa com pernas
+                    const tableGroup = new THREE.Group();
+                    
+                    // Tampo da mesa
+                    const tableTopGeometry = new THREE.BoxGeometry(2, 0.1, 1);
+                    const tableTopMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0x1a1a2a,
+                        roughness: 0.2,
+                        metalness: 0.9
+                    });
+                    const tableTop = new THREE.Mesh(tableTopGeometry, tableTopMaterial);
+                    tableTop.position.y = 0.8;
+                    tableGroup.add(tableTop);
+                    
+                    // Pernas da mesa
+                    const legGeometry = new THREE.CylinderGeometry(0.05, 0.05, 1.6);
+                    const legMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0x2a2a3a,
+                        roughness: 0.3,
+                        metalness: 0.8
+                    });
+                    
+                    for (let i = 0; i < 4; i++) {
+                        const leg = new THREE.Mesh(legGeometry, legMaterial);
+                        const angle = (i * Math.PI) / 2;
+                        leg.position.set(
+                            Math.cos(angle) * 0.8,
+                            0,
+                            Math.sin(angle) * 0.3
+                        );
+                        tableGroup.add(leg);
+                    }
+                    
+                    mesh = tableGroup;
+                    break;
+                    
+                case 'cadeira_futurista':
+                    // Cadeira futurista
+                    const chairGroup = new THREE.Group();
+                    
+                    // Assento
+                    const seatGeometry = new THREE.BoxGeometry(0.8, 0.1, 0.8);
+                    const seatMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0x00ffcc,
+                        roughness: 0.2,
+                        metalness: 0.8,
+                        emissive: 0x002211
+                    });
+                    const seat = new THREE.Mesh(seatGeometry, seatMaterial);
+                    seat.position.y = 0.4;
+                    chairGroup.add(seat);
+                    
+                    // Encosto
+                    const backGeometry = new THREE.BoxGeometry(0.8, 1, 0.1);
+                    const backMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0x00ffcc,
+                        roughness: 0.2,
+                        metalness: 0.8,
+                        emissive: 0x002211
+                    });
+                    const back = new THREE.Mesh(backGeometry, backMaterial);
+                    back.position.set(0, 0.9, -0.35);
+                    chairGroup.add(back);
+                    
+                    // Pernas
+                    const chairLegGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.8);
+                    const chairLegMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0x2a2a3a,
+                        roughness: 0.3,
+                        metalness: 0.8
+                    });
+                    
+                    for (let i = 0; i < 4; i++) {
+                        const leg = new THREE.Mesh(chairLegGeometry, chairLegMaterial);
+                        const angle = (i * Math.PI) / 2;
+                        leg.position.set(
+                            Math.cos(angle) * 0.3,
+                            0,
+                            Math.sin(angle) * 0.3
+                        );
+                        chairGroup.add(leg);
+                    }
+                    
+                    mesh = chairGroup;
+                    break;
+                    
+                default:
+                    // Asset padrão
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+                    material = new THREE.MeshStandardMaterial({ 
+                        color: 0x666666,
+                        roughness: 0.5,
+                        metalness: 0.5
+                    });
+                    mesh = new THREE.Mesh(geometry, material);
+            }
+            
+            // Aplicar sombras
+            mesh.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            
+            return mesh;
+        }
+        
+        // Função para carregar assets - Desabilitada para o tema medieval
+        function loadAssets() {
+            const assetListElement = document.getElementById('asset-list');
+            if (assetListElement) {
+                assetListElement.innerHTML = '<p style="color: #666;">Assets do editor desabilitados no modo medieval.</p>';
+            }
+            console.log('Carregamento de assets do editor ignorado.');
+        }
+        
+        // Função para selecionar asset para colocação
+        function selectAsset(assetName) {
+            if (assetLibrary[assetName]) {
+                // Clonar o asset
+                const clone = assetLibrary[assetName].clone();
+                
+                // Posicionar na frente da câmera
+                const direction = new THREE.Vector3();
+                camera.getWorldDirection(direction);
+                clone.position.copy(camera.position).add(direction.multiplyScalar(2));
+                clone.position.y = 0; // Alinhar ao chão
+                clone.name = `asset_${Date.now()}`;
+                
+                // Aplicar sombras
+                clone.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                
+                // Adicionar à cena
+                scene.add(clone);
+                placedObjects.push(clone);
+                
+                // Selecionar automaticamente o objeto colocado
+                selectObject(clone);
+                
+                console.log(`Asset ${assetName} colocado e selecionado`);
+            }
+        }
+        
+        // Função para alternar modo de edição
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const editorUI = document.getElementById('editor-ui');
+            const infoPanel = document.getElementById('info-panel');
+            
+            if (isEditMode) {
+                // Entrar no modo de edição
+                editorUI.style.display = 'block';
+                infoPanel.style.display = 'none';
+                if (player && player.group) {
+                    player.group.visible = false; // Esconder personagem
+                }
+                
+                // Adicionar grid
+                if (!gridHelper) {
+                    gridHelper = new THREE.GridHelper(200, 50, 0x00ffcc, 0x004433);
+                    scene.add(gridHelper);
+                }
+                
+                // Configurar câmera livre na posição do personagem
+                if (player && player.position) {
+                    camera.position.copy(player.position).add(new THREE.Vector3(0, 5, 5));
+                    camera.lookAt(player.position);
+                } else {
+                    camera.position.set(10, 10, 10);
+                    camera.lookAt(0, 0, 0);
+                }
+                
+                // Mostrar painéis do editor
+                document.getElementById('toolbar').style.display = 'flex';
+                document.getElementById('asset-library').style.display = 'block';
+                document.getElementById('inspector').style.display = 'block';
+                
+                console.log('Modo de edição ativado');
+            } else {
+                // Sair do modo de edição
+                editorUI.style.display = 'none';
+                infoPanel.style.display = 'block';
+                if (player && player.group) {
+                    player.group.visible = true; // Mostrar personagem
+                }
+                
+                // Remover grid
+                if (gridHelper) {
+                    scene.remove(gridHelper);
+                }
+                
+                // Esconder painéis do editor
+                document.getElementById('toolbar').style.display = 'none';
+                document.getElementById('asset-library').style.display = 'none';
+                document.getElementById('inspector').style.display = 'none';
+                document.getElementById('terrain-brushes').style.display = 'none';
+                
+                // Limpar seleção
+                if (selectedObject) {
+                    deselectObject();
+                }
+                
+                console.log('Modo de edição desativado');
+            }
+        }
+        
+        // Função para selecionar objeto
+        function selectObject(object) {
+            if (selectedObject) {
+                deselectObject();
+            }
+            
+            selectedObject = object;
+            
+            // Destacar objeto selecionado
+            const boxHelper = new THREE.BoxHelper(object, 0x00ffcc);
+            boxHelper.name = 'selectionHelper';
+            scene.add(boxHelper);
+            
+            // Configurar transform controls
+            if (transformControls) {
+                scene.remove(transformControls);
+            }
+            
+            transformControls = new TransformControls(camera, renderer.domElement);
+            transformControls.attach(object);
+            transformControls.setMode(currentTool);
+            scene.add(transformControls);
+            
+            // Event listeners para transform controls
+            transformControls.addEventListener('change', () => {
+                updateInspector();
+            });
+            
+            // Atualizar inspetor
+            updateInspector();
+            
+            console.log('Objeto selecionado:', object.name);
+        }
+        
+        // Função para deselecionar objeto
+        function deselectObject() {
+            if (selectedObject) {
+                // Remover highlight
+                const helper = scene.getObjectByName('selectionHelper');
+                if (helper) {
+                    scene.remove(helper);
+                }
+                
+                // Remover transform controls
+                if (transformControls) {
+                    scene.remove(transformControls);
+                    transformControls = null;
+                }
+                
+                selectedObject = null;
+                updateInspector();
+            }
+        }
+        
+        // Função para atualizar inspetor
+        function updateInspector() {
+            const inspector = document.getElementById('object-properties');
+            
+            if (!selectedObject) {
+                inspector.innerHTML = '<p style="color: #666;">Nenhum objeto selecionado</p>';
+                return;
+            }
+            
+            const pos = selectedObject.position;
+            const rot = selectedObject.rotation;
+            const scale = selectedObject.scale;
+            
+            inspector.innerHTML = `
+                <div class="property-group">
+                    <label>Nome:</label>
+                    <input type="text" value="${selectedObject.name || 'Sem nome'}" readonly>
+                </div>
+                <div class="property-group">
+                    <label>Posição X:</label>
+                    <input type="number" value="${pos.x.toFixed(2)}" step="0.1">
+                </div>
+                <div class="property-group">
+                    <label>Posição Y:</label>
+                    <input type="number" value="${pos.y.toFixed(2)}" step="0.1">
+                </div>
+                <div class="property-group">
+                    <label>Posição Z:</label>
+                    <input type="number" value="${pos.z.toFixed(2)}" step="0.1">
+                </div>
+                <div class="property-group">
+                    <label>Rotacionar X:</label>
+                    <input type="number" value="${(rot.x * 180 / Math.PI).toFixed(1)}" step="1">
+                </div>
+                <div class="property-group">
+                    <label>Rotacionar Y:</label>
+                    <input type="number" value="${(rot.y * 180 / Math.PI).toFixed(1)}" step="1">
+                </div>
+                <div class="property-group">
+                    <label>Rotacionar Z:</label>
+                    <input type="number" value="${(rot.z * 180 / Math.PI).toFixed(1)}" step="1">
+                </div>
+                <div class="property-group">
+                    <label>Escala X:</label>
+                    <input type="number" value="${scale.x.toFixed(2)}" step="0.1">
+                </div>
+                <div class="property-group">
+                    <label>Escala Y:</label>
+                    <input type="number" value="${scale.y.toFixed(2)}" step="0.1">
+                </div>
+                <div class="property-group">
+                    <label>Escala Z:</label>
+                    <input type="number" value="${scale.z.toFixed(2)}" step="0.1">
+                </div>
+            `;
+        }
+        
+        // Função para pintar terreno
+        function paintTerrain(intersection) {
+            if (currentTool !== 'paint') return;
+            
+            const ground = scene.getObjectByName('ground');
+            if (!ground || !ground.geometry.attributes.color) return;
+            
+            const colors = ground.geometry.attributes.color.array;
+            const position = ground.geometry.attributes.position;
+            const brushColor = new THREE.Color(brushColors[currentBrush]);
+            
+            // Encontrar vértices próximos ao ponto de intersecção
+            const brushRadius = 5;
+            const brushRadiusSquared = brushRadius * brushRadius;
+            
+            for (let i = 0; i < position.count; i++) {
+                const vertex = new THREE.Vector3(
+                    position.getX(i),
+                    position.getY(i),
+                    position.getZ(i)
+                );
+                
+                const distance = intersection.point.distanceTo(vertex);
+                
+                if (distance < brushRadius) {
+                    const intensity = 1 - (distance / brushRadius);
+                    const currentColor = new THREE.Color(
+                        colors[i * 3],
+                        colors[i * 3 + 1],
+                        colors[i * 3 + 2]
+                    );
+                    
+                    // Misturar cores
+                    const newColor = currentColor.clone().lerp(brushColor, intensity * 0.3);
+                    
+                    colors[i * 3] = newColor.r;
+                    colors[i * 3 + 1] = newColor.g;
+                    colors[i * 3 + 2] = newColor.b;
+                }
+            }
+            
+            ground.geometry.attributes.color.needsUpdate = true;
+        }
+        
+        // Carregar assets ao inicializar
+        console.log('Inicializando assets...');
+        loadAssets();
 
         // Sistema de controles
         const keysPressed = {};
@@ -863,6 +2445,27 @@
                     runningStatus.style.display = 'block';
                 }
             }
+            
+            // Ataque com a tecla E
+            if (e.key.toLowerCase() === 'e') {
+                if (player.animationsLoaded) {
+                    player.playAnimation('attack');
+                    // Voltar para idle após 2 segundos
+                    setTimeout(() => {
+                        if (isFlying) {
+                            player.playAnimation('idle');
+                        } else if (isRunning && (keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d'])) {
+                            player.playAnimation('run');
+                        } else if (keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d']) {
+                            player.playAnimation('run');
+                        } else {
+                            player.playAnimation('idle');
+                        }
+                    }, 2000);
+                } else {
+                    player.animateAttack();
+                }
+            }
         });
         
         document.addEventListener('keyup', (e) => { 
@@ -896,34 +2499,150 @@
             } 
         });
 
+
+        // === EVENT LISTENERS DO EDITOR ===
+        
+        // Toggle do modo de edição
+        document.getElementById('toggle-editor').addEventListener('click', () => {
+            console.log('Botão do editor clicado');
+            toggleEditMode();
+        });
+        
+        // Ferramentas da barra superior
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // Remover classe active de todos os botões
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                // Adicionar classe active ao botão clicado
+                e.target.classList.add('active');
+                
+                currentTool = e.target.dataset.tool;
+                
+                // Mostrar/ocultar painel de pincéis
+                const terrainBrushes = document.getElementById('terrain-brushes');
+                if (currentTool === 'paint') {
+                    terrainBrushes.style.display = 'block';
+                } else {
+                    terrainBrushes.style.display = 'none';
+                }
+                
+                // Atualizar transform controls se houver objeto selecionado
+                if (transformControls && selectedObject) {
+                    transformControls.setMode(currentTool);
+                }
+                
+                console.log('Ferramenta selecionada:', currentTool);
+            });
+        });
+        
+        // Pincéis de terreno
+        document.querySelectorAll('.brush-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // Remover classe active de todos os pincéis
+                document.querySelectorAll('.brush-btn').forEach(b => b.classList.remove('active'));
+                // Adicionar classe active ao pincel clicado
+                e.target.classList.add('active');
+                
+                currentBrush = e.target.dataset.brush;
+                console.log('Pincel selecionado:', currentBrush);
+            });
+        });
+        
+        // Controles do mouse para o editor
+        document.addEventListener('mousedown', (e) => {
+            if (!isEditMode) return;
+            
+            if (e.button === 0) { // Botão esquerdo
+                // Raycasting para seleção/colocação
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, camera);
+                
+                if (isPlacingAsset && assetToPlace) {
+                    // Modo de colocação de asset
+                    const intersects = raycaster.intersectObjects([ground]);
+                    if (intersects.length > 0) {
+                        const intersection = intersects[0];
+                        const clone = assetToPlace.clone();
+                        clone.position.copy(intersection.point);
+                        clone.position.y = 0; // Alinhar ao chão
+                        clone.name = `asset_${Date.now()}`;
+                        
+                        // Aplicar sombras
+                        clone.traverse((child) => {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        });
+                        
+                        scene.add(clone);
+                        placedObjects.push(clone);
+                        
+                        console.log('Asset colocado:', clone.name);
+                    }
+                } else if (currentTool === 'paint') {
+                    // Modo de pintura
+                    const intersects = raycaster.intersectObjects([ground]);
+                    if (intersects.length > 0) {
+                        paintTerrain(intersects[0]);
+                    }
+                } else {
+                    // Modo de seleção
+                    const intersects = raycaster.intersectObjects(placedObjects);
+                    if (intersects.length > 0) {
+                        selectObject(intersects[0].object);
+                    } else {
+                        deselectObject();
+                    }
+                }
+            }
+        });
+        
+        // Controles de câmera livre no modo de edição
+        document.addEventListener('keydown', (e) => {
+            if (!isEditMode) return;
+            
+            const moveSpeed = 0.5;
+            const direction = new THREE.Vector3();
+            
+            // Movimento da câmera
+            if (keysPressed['w']) direction.z -= moveSpeed;
+            if (keysPressed['s']) direction.z += moveSpeed;
+            if (keysPressed['a']) direction.x -= moveSpeed;
+            if (keysPressed['d']) direction.x += moveSpeed;
+            if (keysPressed['q']) direction.y -= moveSpeed;
+            if (keysPressed['e']) direction.y += moveSpeed;
+            
+            // Aplicar rotação da câmera ao movimento
+            direction.applyQuaternion(camera.quaternion);
+            camera.position.add(direction);
+        });
+        
+        // Controles de câmera com mouse (modo jogo e edição)
         document.addEventListener('mousemove', (e) => {
             if (!isRightMouseDown) return;
             
             const deltaX = e.clientX - previousMousePosition.x;
             const deltaY = e.clientY - previousMousePosition.y;
             
-            // Rotação horizontal da câmera
-            const yAxis = new THREE.Vector3(0, 1, 0);
-            cameraOffset.applyAxisAngle(yAxis, -deltaX * 0.005);
-            
-            // Rotação vertical da câmera
-            const xAxis = new THREE.Vector3().crossVectors(yAxis, cameraOffset).normalize();
-            cameraOffset.applyAxisAngle(xAxis, -deltaY * 0.005);
-            
-            // Limitar altura da câmera baseado no modo
-            if (isFirstPerson) {
-                // Primeira pessoa: altura fixa, mas pode olhar para cima/baixo
-                cameraOffset.y = cameraHeight;
-                // Limitar ângulo vertical para não virar de cabeça para baixo
-                const verticalAngle = Math.asin(cameraOffset.y / cameraOffset.length());
-                if (verticalAngle > Math.PI/2 - 0.1) {
-                    cameraOffset.y = Math.sin(Math.PI/2 - 0.1) * cameraOffset.length();
-                }
-                if (verticalAngle < -Math.PI/2 + 0.1) {
-                    cameraOffset.y = Math.sin(-Math.PI/2 + 0.1) * cameraOffset.length();
-                }
+            if (isEditMode) {
+                // Modo edição: câmera livre
+                const yAxis = new THREE.Vector3(0, 1, 0);
+                camera.rotateOnAxis(yAxis, -deltaX * 0.005);
+                
+                const xAxis = new THREE.Vector3().crossVectors(yAxis, camera.getWorldDirection(new THREE.Vector3())).normalize();
+                camera.rotateOnAxis(xAxis, -deltaY * 0.005);
             } else {
-                // Terceira pessoa: altura variável com limites
+                // Modo jogo: câmera orbital
+                const yAxis = new THREE.Vector3(0, 1, 0);
+                cameraOffset.applyAxisAngle(yAxis, -deltaX * 0.005);
+                
+                const xAxis = new THREE.Vector3().crossVectors(yAxis, cameraOffset).normalize();
+                cameraOffset.applyAxisAngle(xAxis, -deltaY * 0.005);
+                
+                // Limitar rotação vertical
                 if (cameraOffset.y < 2) cameraOffset.y = 2;
                 if (cameraOffset.y > 15) cameraOffset.y = 15;
             }
@@ -937,6 +2656,20 @@
         function animate() {
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
+            
+            // === LÓGICA DO EDITOR ===
+            if (isEditMode) {
+                // No modo de edição, apenas atualizar transform controls
+                if (transformControls && typeof transformControls.update === 'function') {
+                    transformControls.update();
+                }
+                
+                // Renderizar cena
+                renderer.render(scene, camera);
+                return;
+            }
+            
+            // === LÓGICA DO JOGO (modo normal) ===
             
             // Calcular velocidade base
             let baseSpeed = 5;
@@ -1012,6 +2745,34 @@
                 playerRotation = Math.atan2(moveDirection.x, moveDirection.z);
                 player.rotation.y = playerRotation;
             }
+            
+            // Atualizar animações do personagem
+            if (player.animationsLoaded) {
+                // Usar animações FBX quando disponíveis
+                if (isFlying) {
+                    player.playAnimation('idle');
+                } else if (isRunning && (keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d'])) {
+                    player.playAnimation('run');
+                } else if (keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d']) {
+                    player.playAnimation('run');
+                } else {
+                    player.playAnimation('idle');
+                }
+            } else {
+                // Usar animações programáticas como fallback
+                if (isFlying) {
+                    player.animateIdle();
+                } else if (isRunning && (keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d'])) {
+                    player.animateRun();
+                } else if (keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d']) {
+                    player.animateRun();
+                } else {
+                    player.animateIdle();
+                }
+            }
+            
+            // Atualizar personagem
+            player.update();
             
             // Atualizar posição da câmera
             if (isFirstPerson) {
